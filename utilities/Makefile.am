@@ -4,7 +4,7 @@ INCLUDES= $(all_includes) -I../include
 AM_CFLAGS   = -Wall
 AM_CXXFLAGS = $(AM_CFLAGS)
 
-bin_PROGRAMS = lsssm ssm-logger ssm-player ssm-transporter ssm-date ssm-monitor ssm-graph
+bin_PROGRAMS = lsssm ssm-logger ssm-player ssm-proxy ssm-transporter ssm-date ssm-monitor ssm-graph
 noinst_HEADERS = ssm-transporter.h printlog.hpp
 
 # shell scripts
@@ -26,6 +26,12 @@ ssm_player_SOURCES = ssm-player.cpp
 ssm_player_CFLAGS = $(AM_CFLAGS) -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 ssm_player_CXXFLAGS = $(ssm_advance_player_CFLAGS)
 ssm_player_LDADD = ../src/libssm.la -lm
+
+## ssm-proxy
+ssm_proxy_SOURCES = ssm-proxy.cpp test.cpp
+ssm_proxy_CFLAGS = $(AM_CFLAGS) -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
+ssm_proxy_CXXFLAGS = $(ssm_proxy_CFLAGS)
+ssm_proxy_LDADD = ../src/libssm.la -lm
 
 ## ssm-transporter
 ssm_transporter_SOURCES = ssm-transporter.c
