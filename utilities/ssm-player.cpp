@@ -230,6 +230,7 @@ class MyParam
 		endOffsetTime = 0.0;
 		speed = 1.0;
 		isLoop = false;
+		useNetwork = false;
 	}
 public:
 	
@@ -237,6 +238,7 @@ public:
 	ssmTimeT startTime, endTime, startOffsetTime, endOffsetTime;
 	bool isLoop;
 	double speed;
+	bool useNetwork;
 
 	MyParam(){init();}
 	
@@ -266,6 +268,7 @@ public:
 			{"start-time", 1, 0, 's'},
 			{"end-time", 1, 0, 'e'},
 			{"loop", 0, 0, 'l'},
+			{"network", 0, 0, 'n'},
 			{"start-ssmtime", 1, 0, 'S'},
 			{"end-ssmtime", 1, 0, 'E'},
 			{"verbose", 0, 0, 'v'},
@@ -281,6 +284,7 @@ public:
 				case 's' : startOffsetTime = atof(optarg); break;
 				case 'e' : endOffsetTime = atof(optarg); break;
 				case 'l' : isLoop = true; break;
+				case 'n' : useNetwork = true; break;
 				case 'S' : startTime = atof(optarg); break;
 				case 'E' : endTime = atof(optarg); break;
 				case 'v' : printlog::setLogVerbose(  ); break;
@@ -502,10 +506,14 @@ int main( int aArgc, char **aArgv )
 		// キーボートをノンブロッキングにしてみる
 		fcntl( fileno( stdin ), F_SETFL, O_NONBLOCK );
 
-
 		// オプション解析
 		if( !param.optAnalyze( aArgc, aArgv ) )
 			return -1;
+
+		if (param.useNetwork) {
+				std::cout << "use network" << std::endl;
+				exit(1);
+			}
 
 		// SSMの初期化
 		if( !initSSM(  ) )
