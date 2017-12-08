@@ -9,8 +9,13 @@
 
 #include <errno.h>
 
+#include "libssm.h"
+
+#include "printlog.hpp"
+
 #include "ssm-proxy.hpp"
 
+extern pid_t my_pid; // for debug
 
 ProxyServer::ProxyServer() {
 	printf("Proxy Server created\n");
@@ -85,6 +90,13 @@ bool ProxyServer::client_close() {
 
 void ProxyServer::handleCommand() {
 	printf("handlecommand\n");
+	if ( !initSSM ()) {
+		//logError << "ssm init error." << std::endl;
+		std::cerr << "Error" << std::endl;
+		exit(1);
+	}
+
+	printf("mypid = %d\n", my_pid);
 }
 
 
