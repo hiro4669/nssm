@@ -22,6 +22,8 @@
 #include "ssm-log.hpp"
 #include "printlog.hpp"
 
+#include "ssm-proxy-client.hpp"
+
 using namespace std;
 
 bool gShutOff = false;
@@ -511,9 +513,11 @@ int main( int aArgc, char **aArgv )
 			return -1;
 
 		if (param.useNetwork) {
-				std::cout << "use network" << std::endl;
-				exit(1);
-			}
+			PConnector con;
+			std::cout << "use network" << std::endl;
+			con.connectToServer("127.0.0.1", 8080);
+			exit(1);
+		}
 
 		// SSMの初期化
 		if( !initSSM(  ) )

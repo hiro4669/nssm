@@ -90,6 +90,18 @@ bool ProxyServer::client_close() {
 
 void ProxyServer::handleCommand() {
 	printf("handlecommand\n");
+	char *buf = (char*)malloc(sizeof(ssm_msg));
+	while(true) {
+		printf("wait recv\n");
+		int len = recv(this->client.data_socket, buf, sizeof(ssm_msg), 0);
+		printf("len = %d\n", len);
+		if (len == 0) break;
+	}
+
+
+
+	free(buf);
+	/*
 	if ( !initSSM ()) {
 		//logError << "ssm init error." << std::endl;
 		std::cerr << "Error" << std::endl;
@@ -97,6 +109,7 @@ void ProxyServer::handleCommand() {
 	}
 
 	printf("mypid = %d\n", my_pid);
+	*/
 }
 
 
@@ -127,6 +140,7 @@ bool ProxyServer::run() {
 
 int main(void) {
 	ProxyServer server;
+	printf("size_t size = %d\n", (int)sizeof(size_t));
 	server.init();
 	server.run();
 	test();

@@ -140,7 +140,8 @@ ssm_monitor_DEPENDENCIES = ../src/libssm.la
 ssm_monitor_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(ssm_monitor_CFLAGS) \
 	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-am_ssm_player_OBJECTS = ssm_player-ssm-player.$(OBJEXT)
+am_ssm_player_OBJECTS = ssm_player-ssm-player.$(OBJEXT) \
+	ssm_player-ssm-proxy-client.$(OBJEXT)
 ssm_player_OBJECTS = $(am_ssm_player_OBJECTS)
 ssm_player_DEPENDENCIES = ../src/libssm.la
 ssm_player_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -414,7 +415,7 @@ ssm_logger_SOURCES = ssm-logger.cpp
 ssm_logger_CFLAGS = $(AM_CFLAGS) -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 ssm_logger_CXXFLAGS = $(ssm_logger_CFLAGS)
 ssm_logger_LDADD = ../src/libssm.la -lm
-ssm_player_SOURCES = ssm-player.cpp
+ssm_player_SOURCES = ssm-player.cpp ssm-proxy-client.cpp
 ssm_player_CFLAGS = $(AM_CFLAGS) -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 ssm_player_CXXFLAGS = $(ssm_advance_player_CFLAGS)
 ssm_player_LDADD = ../src/libssm.la -lm
@@ -600,6 +601,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ssm_logger-ssm-logger.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ssm_monitor-ssm-monitor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ssm_player-ssm-player.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ssm_player-ssm-proxy-client.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ssm_proxy-ssm-proxy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ssm_proxy-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ssm_transporter-ssm-transporter.Po@am__quote@
@@ -729,6 +731,20 @@ ssm_player-ssm-player.obj: ssm-player.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ssm-player.cpp' object='ssm_player-ssm-player.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ssm_player_CXXFLAGS) $(CXXFLAGS) -c -o ssm_player-ssm-player.obj `if test -f 'ssm-player.cpp'; then $(CYGPATH_W) 'ssm-player.cpp'; else $(CYGPATH_W) '$(srcdir)/ssm-player.cpp'; fi`
+
+ssm_player-ssm-proxy-client.o: ssm-proxy-client.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ssm_player_CXXFLAGS) $(CXXFLAGS) -MT ssm_player-ssm-proxy-client.o -MD -MP -MF $(DEPDIR)/ssm_player-ssm-proxy-client.Tpo -c -o ssm_player-ssm-proxy-client.o `test -f 'ssm-proxy-client.cpp' || echo '$(srcdir)/'`ssm-proxy-client.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ssm_player-ssm-proxy-client.Tpo $(DEPDIR)/ssm_player-ssm-proxy-client.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ssm-proxy-client.cpp' object='ssm_player-ssm-proxy-client.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ssm_player_CXXFLAGS) $(CXXFLAGS) -c -o ssm_player-ssm-proxy-client.o `test -f 'ssm-proxy-client.cpp' || echo '$(srcdir)/'`ssm-proxy-client.cpp
+
+ssm_player-ssm-proxy-client.obj: ssm-proxy-client.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ssm_player_CXXFLAGS) $(CXXFLAGS) -MT ssm_player-ssm-proxy-client.obj -MD -MP -MF $(DEPDIR)/ssm_player-ssm-proxy-client.Tpo -c -o ssm_player-ssm-proxy-client.obj `if test -f 'ssm-proxy-client.cpp'; then $(CYGPATH_W) 'ssm-proxy-client.cpp'; else $(CYGPATH_W) '$(srcdir)/ssm-proxy-client.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ssm_player-ssm-proxy-client.Tpo $(DEPDIR)/ssm_player-ssm-proxy-client.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ssm-proxy-client.cpp' object='ssm_player-ssm-proxy-client.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ssm_player_CXXFLAGS) $(CXXFLAGS) -c -o ssm_player-ssm-proxy-client.obj `if test -f 'ssm-proxy-client.cpp'; then $(CYGPATH_W) 'ssm-proxy-client.cpp'; else $(CYGPATH_W) '$(srcdir)/ssm-proxy-client.cpp'; fi`
 
 ssm_proxy-ssm-proxy.o: ssm-proxy.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ssm_proxy_CXXFLAGS) $(CXXFLAGS) -MT ssm_proxy-ssm-proxy.o -MD -MP -MF $(DEPDIR)/ssm_proxy-ssm-proxy.Tpo -c -o ssm_proxy-ssm-proxy.o `test -f 'ssm-proxy.cpp' || echo '$(srcdir)/'`ssm-proxy.cpp
