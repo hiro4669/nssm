@@ -33,10 +33,17 @@ private:
 	bool wait();
 
 	void serializeMessage(ssm_msg *msg, char *buf);
+
 	int readInt(char **p);
 	long readLong(char **p);
 	void readRawData(char **p, char *d, int len);
+	void writeInt(char **p, int v);
+	void writeLong(char **p, long v);
+	void writeRawData(char **p, char *d, int len);
 
+
+	int receiveMsg(ssm_msg *msg, char *buf);
+	int sendMsg(int cmd_type, ssm_msg *msg);
 
 public:
 	ProxyServer();
@@ -46,6 +53,9 @@ public:
 	bool server_close();
 	bool client_close();
 	void handleCommand();
+
+
+
 
 };
 

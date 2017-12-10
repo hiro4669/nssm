@@ -119,6 +119,26 @@ void ProxyServer::readRawData(char **p, char *d, int len) {
 	}
 }
 
+void ProxyServer::writeInt(char **p, int v) {
+	**p = (v >> 24) & 0xff; (*p)++;
+	**p = (v >> 16) & 0xff; (*p)++;
+	**p = (v >> 8)  & 0xff; (*p)++;
+	**p = (v >> 0)  & 0xff; (*p)++;
+}
+
+void ProxyServer::writeLong(char **p, long v) {
+	**p = (v >> 56) & 0xff; (*p)++;
+	**p = (v >> 48) & 0xff; (*p)++;
+	**p = (v >> 40)  & 0xff; (*p)++;
+	**p = (v >> 32)  & 0xff; (*p)++;
+	this->writeInt(p, v);
+}
+
+void ProxyServer::writeRawData(char **p, char *d, int len) {
+	for (int i = 0; i < len; ++i, (*p)++) **p = d[i];
+}
+
+
 void ProxyServer::serializeMessage(ssm_msg *msg, char *buf) {
 	msg->msg_type = readLong(&buf);
 	msg->res_type = readLong(&buf);
@@ -145,16 +165,72 @@ void ProxyServer::serializeMessage(ssm_msg *msg, char *buf) {
 	*/
 }
 
+int ProxyServer::receiveMsg(ssm_msg *msg, char *buf) {
+	int len = recv(this->client.data_socket, buf, sizeof(ssm_msg), 0);
+	if (len > 0) {
+		serializeMessage(msg, buf);
+	}
+	return len;
+}
+
+int ProxyServer::sendMsg(int cmd_type, ssm_msg *msg) {
+	ssm_msg msgbuf;
+	size_t len;
+	char *buf, *p;
+	if (msg == NULL) {
+		msg = &msgbuf;
+	}
+
+	msg->cmd_type = cmd_type;
+	buf = (char*)malloc(sizeof(ssm_msg));
+	p = buf;
+	writeLong(&p, msg->msg_type);
+	writeLong(&p, msg->res_type);
+	writeInt(&p, msg->cmd_type);
+	writeRawData(&p, msg->name, 32);
+	writeInt(&p, msg->suid);
+	writeLong(&p, msg->ssize);
+	writeLong(&p, msg->hsize);
+	writeLong(&p, msg->time);
+
+	if ((len = send(this->client.data_socket, buf, sizeof(ssm_msg), 0)) == -1) {
+		fprintf(stderr, "error happens\n");
+	}
+
+	free(buf);
+	return len;
+}
+
 void ProxyServer::handleCommand() {
 	printf("handlecommand\n");
 	ssm_msg msg;
 	char *buf = (char*)malloc(sizeof(ssm_msg));
 	while(true) {
 		printf("wait recv\n");
-		int len = recv(this->client.data_socket, buf, sizeof(ssm_msg), 0);
+		int len = receiveMsg(&msg, buf);
 		printf("len = %d\n", len);
 		if (len == 0) break;
-		serializeMessage(&msg, buf);
+		switch (msg.cmd_type & 0x1f) {
+		case MC_NULL: {
+			break;
+		}
+		case MC_INITIALIZE: {
+			printf("MC_INITIALIZE\n");
+			/*
+			if (!initSSM()) {
+				fprintf(stderr, "init ssm error in ssm-proxy\n");
+			}
+			*/
+			sendMsg(MC_RES, &msg);
+			break;
+		}
+		default: {
+			fprintf(stderr, "NOTICE : unknown msg %d", msg.cmd_type);
+			break;
+		}
+		}
+
+
 	}
 
 

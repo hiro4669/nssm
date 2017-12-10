@@ -16,8 +16,11 @@ private:
 	void writeInt(char **p, int v);
 	void writeLong(char **p, long v);
 	void writeRawData(char **p, char *d, int len);
+	int readInt(char **p);
+	long readLong(char **p);
+	void readRawData(char **p, char *d, int len);
 
-
+	void serializeMessage(ssm_msg *msg, char *buf);
 
 public:
 	PConnector();
@@ -25,5 +28,6 @@ public:
 
 	bool connectToServer(char* serverName, int port);
 	bool sendMsgToServer(int cmd_type, ssm_msg *msg);
+	bool recvMsgFromServer(ssm_msg *msg, char *buf);
 };
 #endif

@@ -15,6 +15,37 @@ PConnector::~PConnector() {
 	}
 }
 
+int PConnector::readInt(char **p) {
+	uint8_t v1 = **p; (*p)++;
+	uint8_t v2 = **p; (*p)++;
+	uint8_t v3 = **p; (*p)++;
+	uint8_t v4 = **p; (*p)++;
+
+	int v =(int)( v1 << 24 | v2 << 16 | v3 << 8 | v4);
+	return v;
+}
+
+long PConnector::readLong(char **p) {
+	uint8_t v1 = **p; (*p)++;
+	uint8_t v2 = **p; (*p)++;
+	uint8_t v3 = **p; (*p)++;
+	uint8_t v4 = **p; (*p)++;
+	uint8_t v5 = **p; (*p)++;
+	uint8_t v6 = **p; (*p)++;
+	uint8_t v7 = **p; (*p)++;
+	uint8_t v8 = **p; (*p)++;
+
+	long lv = (long)((long)v1 << 56 | (long)v2 << 48 | (long)v3 << 40 | (long)v4 << 32
+			| (long)v5 << 24 | (long)v6 << 16 | (long)v7 << 8 | (long)v8);
+	return lv;
+}
+
+void PConnector::readRawData(char **p, char *d, int len) {
+	for (int i = 0; i < len; ++i, (*p)++) {
+		d[i] = **p;
+	}
+}
+
 void PConnector::writeInt(char **p, int v) {
 	**p = (v >> 24) & 0xff; (*p)++;
 	**p = (v >> 16) & 0xff; (*p)++;
@@ -43,8 +74,8 @@ bool PConnector::connectToServer(char* serverName, int port) {
 	server.sin_family = AF_INET;
 	server.sin_port = htons(port);
 	server.sin_addr.s_addr = inet_addr(serverName);
-	if(!connect(sock, (struct sockaddr *)&server, sizeof(server))) {
-		fprintf(stderr, "connection error");
+	if(connect(sock, (struct sockaddr *)&server, sizeof(server))) {
+		fprintf(stderr, "connection error\n");
 		return false;
 	}
 	printf("sock = %d\n", sock);
@@ -52,6 +83,27 @@ bool PConnector::connectToServer(char* serverName, int port) {
 	return true;
 }
 
+void PConnector::serializeMessage(ssm_msg *msg, char *buf) {
+	printf("serialize message\n");
+	msg->msg_type = readLong(&buf);
+	msg->res_type = readLong(&buf);
+	msg->cmd_type = readInt(&buf);
+	readRawData(&buf, msg->name, 32);
+	msg->suid = readInt(&buf);
+	msg->ssize = readLong(&buf);
+	msg->hsize = readLong(&buf);
+	msg->time = readLong(&buf);
+}
+
+bool PConnector::recvMsgFromServer(ssm_msg *msg, char *buf) {
+	printf("ready to receive\n");
+	int len = recv(sock, buf, sizeof(ssm_msg), 0);
+	if (len > 0) {
+		serializeMessage(msg, buf);
+		return true;
+	}
+	return false;
+}
 
 bool PConnector::sendMsgToServer(int cmd_type, ssm_msg *msg) {
 	ssm_msg msgbuf;
@@ -93,6 +145,7 @@ bool PConnector::sendMsgToServer(int cmd_type, ssm_msg *msg) {
 	if (send(sock, buf, sizeof(ssm_msg), 0) == -1) {
 		fprintf(stderr, "error happens\n");
 	}
+	free(buf);
 
 	return true;
 }

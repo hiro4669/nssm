@@ -513,10 +513,18 @@ int main( int aArgc, char **aArgv )
 			return -1;
 
 		if (param.useNetwork) {
+			char *msg_buf;
+			ssm_msg msg;
 			PConnector con;
 			std::cout << "use network" << std::endl;
+
+			msg_buf = (char*)malloc(sizeof(ssm_msg));
+
 			con.connectToServer("127.0.0.1", 8080);
 			con.sendMsgToServer(MC_INITIALIZE, NULL);
+			con.recvMsgFromServer(&msg, msg_buf);
+			printf("msg = %d\n", msg.cmd_type);
+			free(msg_buf);
 			exit(1);
 		}
 
