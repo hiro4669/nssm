@@ -88,14 +88,73 @@ bool ProxyServer::client_close() {
 	return true;
 }
 
+int ProxyServer::readInt(char **p) {
+	uint8_t v1 = **p; (*p)++;
+	uint8_t v2 = **p; (*p)++;
+	uint8_t v3 = **p; (*p)++;
+	uint8_t v4 = **p; (*p)++;
+
+	int v =(int)( v1 << 24 | v2 << 16 | v3 << 8 | v4);
+	return v;
+}
+
+long ProxyServer::readLong(char **p) {
+	uint8_t v1 = **p; (*p)++;
+	uint8_t v2 = **p; (*p)++;
+	uint8_t v3 = **p; (*p)++;
+	uint8_t v4 = **p; (*p)++;
+	uint8_t v5 = **p; (*p)++;
+	uint8_t v6 = **p; (*p)++;
+	uint8_t v7 = **p; (*p)++;
+	uint8_t v8 = **p; (*p)++;
+
+	long lv = (long)((long)v1 << 56 | (long)v2 << 48 | (long)v3 << 40 | (long)v4 << 32
+			| (long)v5 << 24 | (long)v6 << 16 | (long)v7 << 8 | (long)v8);
+	return lv;
+}
+
+void ProxyServer::readRawData(char **p, char *d, int len) {
+	for (int i = 0; i < len; ++i, (*p)++) {
+		d[i] = **p;
+	}
+}
+
+void ProxyServer::serializeMessage(ssm_msg *msg, char *buf) {
+	msg->msg_type = readLong(&buf);
+	msg->res_type = readLong(&buf);
+	msg->cmd_type = readInt(&buf);
+	readRawData(&buf, msg->name, 32);
+	msg->suid = readInt(&buf);
+	msg->ssize = readLong(&buf);
+	msg->hsize = readLong(&buf);
+	msg->time = readLong(&buf);
+
+	/*
+	printf("msg_type = %d\n", msg->msg_type);
+	printf("res_type = %d\n", msg->res_type);
+	printf("cmd_type = %d\n", msg->cmd_type);
+
+
+	for (int i = 0; i < 10; ++i) {
+		printf("%02x ", msg->name[i]);
+	}
+	printf("\n");
+	printf("suid = %d\n", msg->suid);
+	printf("ssize = %d\n", msg->ssize);
+	printf("hsize = %d\n", msg->hsize);
+	*/
+}
+
 void ProxyServer::handleCommand() {
 	printf("handlecommand\n");
+	ssm_msg msg;
 	char *buf = (char*)malloc(sizeof(ssm_msg));
 	while(true) {
 		printf("wait recv\n");
 		int len = recv(this->client.data_socket, buf, sizeof(ssm_msg), 0);
 		printf("len = %d\n", len);
 		if (len == 0) break;
+		serializeMessage(&msg, buf);
 	}
 
 

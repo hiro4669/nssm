@@ -32,6 +32,12 @@ private:
 	bool open();
 	bool wait();
 
+	void serializeMessage(ssm_msg *msg, char *buf);
+	int readInt(char **p);
+	long readLong(char **p);
+	void readRawData(char **p, char *d, int len);
+
+
 public:
 	ProxyServer();
 	~ProxyServer();

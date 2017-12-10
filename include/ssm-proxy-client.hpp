@@ -7,10 +7,16 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "libssm.h"
+
 class PConnector {
 private:
 	struct sockaddr_in server;
 	int sock;
+	void writeInt(char **p, int v);
+	void writeLong(char **p, long v);
+	void writeRawData(char **p, char *d, int len);
+
 
 
 public:
@@ -18,5 +24,6 @@ public:
 	~PConnector();
 
 	bool connectToServer(char* serverName, int port);
+	bool sendMsgToServer(int cmd_type, ssm_msg *msg);
 };
 #endif

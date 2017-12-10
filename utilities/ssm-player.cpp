@@ -516,6 +516,7 @@ int main( int aArgc, char **aArgv )
 			PConnector con;
 			std::cout << "use network" << std::endl;
 			con.connectToServer("127.0.0.1", 8080);
+			con.sendMsgToServer(MC_INITIALIZE, NULL);
 			exit(1);
 		}
 
