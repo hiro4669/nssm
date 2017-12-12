@@ -71,6 +71,10 @@ class LogPlayer
 	SSMApiBase stream;
 	SSMLogBase log;
 	
+	/* added for network */
+	bool useNetwork;
+	PConnector con;
+
 	int readCnt;// 読み込んだ回数
 	int writeCnt; // 書きこんだ回数
 
@@ -84,6 +88,7 @@ class LogPlayer
 		readCnt = 0;
 		writeCnt = 0;
 		mIsPlaying = false;
+		useNetwork = false;
 	}
 
 public:
@@ -216,6 +221,10 @@ public:
 	const ssmTimeT &getStartTime() const
 	{
 		return log.getStartTime();
+	}
+
+	void setUseNetwork(bool useNetwork) {
+		this->useNetwork = useNetwork;
 	}
 };
 
@@ -513,6 +522,7 @@ int main( int aArgc, char **aArgv )
 			return -1;
 
 		if (param.useNetwork) {
+
 			char *msg_buf;
 			ssm_msg msg;
 			PConnector con;
@@ -525,6 +535,17 @@ int main( int aArgc, char **aArgv )
 			con.recvMsgFromServer(&msg, msg_buf);
 			printf("msg = %d\n", msg.cmd_type);
 			free(msg_buf);
+
+			log = param.logArray.begin();
+			while (log != param.logArray.end()) {
+				log->setUseNetwork(true);
+				// logの中のPConnectorからMC_INITIALIZEを発行する
+				printf("hogehoge\n");
+				log++;
+			}
+
+
+
 			exit(1);
 		}
 
