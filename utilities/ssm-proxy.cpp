@@ -113,6 +113,14 @@ long ProxyServer::readLong(char **p) {
 	return lv;
 }
 
+double ProxyServer::readDouble(char **p) {
+	char buf[8];
+	for (int i = 0; i < 8; ++i, (*p)++) {
+		buf[7-i] = **p;
+	}
+	return *(double*)buf;
+}
+
 void ProxyServer::readRawData(char **p, char *d, int len) {
 	for (int i = 0; i < len; ++i, (*p)++) {
 		d[i] = **p;
@@ -134,6 +142,13 @@ void ProxyServer::writeLong(char **p, long v) {
 	this->writeInt(p, v);
 }
 
+void ProxyServer::writeDouble(char **p, double v) {
+	char *dp = (char*)&v;
+	for (int i = 0; i < 8; ++i, (*p)++) {
+		**p = dp[7 - i] & 0xff;
+	}
+}
+
 void ProxyServer::writeRawData(char **p, char *d, int len) {
 	for (int i = 0; i < len; ++i, (*p)++) **p = d[i];
 }
@@ -147,7 +162,9 @@ void ProxyServer::serializeMessage(ssm_msg *msg, char *buf) {
 	msg->suid = readInt(&buf);
 	msg->ssize = readLong(&buf);
 	msg->hsize = readLong(&buf);
-	msg->time = readLong(&buf);
+	//msg->time = readLong(&buf);
+	msg->time = readDouble(&buf);
+
 
 	/*
 	printf("msg_type = %d\n", msg->msg_type);
@@ -162,6 +179,7 @@ void ProxyServer::serializeMessage(ssm_msg *msg, char *buf) {
 	printf("suid = %d\n", msg->suid);
 	printf("ssize = %d\n", msg->ssize);
 	printf("hsize = %d\n", msg->hsize);
+	printf("time = %f\n", msg->time);
 	*/
 }
 

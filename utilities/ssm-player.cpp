@@ -73,7 +73,7 @@ class LogPlayer
 	
 	/* added for network */
 	bool useNetwork;
-	PConnector con;
+	PConnector *con;
 
 	int readCnt;// 読み込んだ回数
 	int writeCnt; // 書きこんだ回数
@@ -89,6 +89,7 @@ class LogPlayer
 		writeCnt = 0;
 		mIsPlaying = false;
 		useNetwork = false;
+		con = NULL;
 	}
 
 public:
@@ -125,6 +126,8 @@ public:
 		free( property );
 		data = NULL;
 		property = NULL;
+		delete con;
+
 	}
 	
 	// openしたら必ずcloseすること！
@@ -148,6 +151,11 @@ public:
 		}
 		log.setBuffer( data, dataSize, property, propertySize );
 		stream.setBuffer( data, dataSize, property, propertySize );
+
+		/* For Network */
+		if (useNetwork) {
+			con->setBuffer(data, dataSize, property, propertySize);
+		}
 		
 		log.readProperty(  );
 		log.readNext(  );
@@ -155,8 +163,18 @@ public:
 		ssmTimeT saveTime;
 		saveTime = calcSSM_life( log.getBufferNum(  ), log.getCycle(  ) );
 		logVerbose << "> "<< log.getStreamName() << ", " << log.getStreamId() << ", " << saveTime << ", " << log.getCycle() << endl;
-		if( !stream.create( log.getStreamName(), log.getStreamId(), saveTime, log.getCycle() ) )
-			return false;
+
+		/* For Network */
+		if (useNetwork) {
+			printf("use network\n");
+			printf("saveTime = %f\n", saveTime);
+			printf("cycle = %f\n", log.getCycle());
+
+			exit(1); // for test
+		} else {
+			if( !stream.create( log.getStreamName(), log.getStreamId(), saveTime, log.getCycle() ) )
+				return false;
+		}
 		
 		if( propertySize && !stream.setProperty() )
 			return false;
@@ -225,6 +243,14 @@ public:
 
 	void setUseNetwork(bool useNetwork) {
 		this->useNetwork = useNetwork;
+		con = new PConnector();
+	}
+
+	void initRemote() {
+		printf("init remote\n");
+		if (useNetwork) {
+			con->initRemote();
+		}
 	}
 };
 
@@ -503,6 +529,27 @@ public:
 };
 
 
+void nproc_start(MyParam& param) {
+	LogPlayerArray::iterator log;
+	char command[128];
+
+	log = param.logArray.begin();
+	while (log != param.logArray.end()) {
+		log->setUseNetwork(true);
+		log->initRemote();
+		// logの中のPConnectorからMC_INITIALIZEを発行する
+		log++;
+	}
+	setSigInt();
+
+	// ログファイルの展開とストリームの作成
+	param.logOpen();
+	//param.printProgressInit();
+
+//	logInfo << "  start" << endl << endl;
+	//logInfo << "\033[1A" << "> " << flush;
+}
+
 // SSMのログ再生
 int main( int aArgc, char **aArgv )
 {
@@ -522,30 +569,7 @@ int main( int aArgc, char **aArgv )
 			return -1;
 
 		if (param.useNetwork) {
-
-			char *msg_buf;
-			ssm_msg msg;
-			PConnector con;
-			std::cout << "use network" << std::endl;
-
-			msg_buf = (char*)malloc(sizeof(ssm_msg));
-
-			con.connectToServer("127.0.0.1", 8080);
-			con.sendMsgToServer(MC_INITIALIZE, NULL);
-			con.recvMsgFromServer(&msg, msg_buf);
-			printf("msg = %d\n", msg.cmd_type);
-			free(msg_buf);
-
-			log = param.logArray.begin();
-			while (log != param.logArray.end()) {
-				log->setUseNetwork(true);
-				// logの中のPConnectorからMC_INITIALIZEを発行する
-				printf("hogehoge\n");
-				log++;
-			}
-
-
-
+			nproc_start(param);
 			exit(1);
 		}
 

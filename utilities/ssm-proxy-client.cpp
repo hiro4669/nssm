@@ -40,6 +40,14 @@ long PConnector::readLong(char **p) {
 	return lv;
 }
 
+double PConnector::readDouble(char **p) {
+	char buf[8];
+	for (int i = 0; i < 8; ++i, (*p)++) {
+		buf[7-i] = **p;
+	}
+	return *(double*)buf;
+}
+
 void PConnector::readRawData(char **p, char *d, int len) {
 	for (int i = 0; i < len; ++i, (*p)++) {
 		d[i] = **p;
@@ -61,11 +69,18 @@ void PConnector::writeLong(char **p, long v) {
 	this->writeInt(p, v);
 }
 
+void PConnector::writeDouble(char **p, double v) {
+	char *dp = (char*)&v;
+	for (int i = 0; i < 8; ++i, (*p)++) {
+		**p = dp[7 - i] & 0xff;
+	}
+}
+
 void PConnector::writeRawData(char **p, char *d, int len) {
 	for (int i = 0; i < len; ++i, (*p)++) **p = d[i];
 }
 
-bool PConnector::connectToServer(char* serverName, int port) {
+bool PConnector::connectToServer(const char* serverName, int port) {
 	printf("connect to server\n");
 
 
@@ -81,6 +96,22 @@ bool PConnector::connectToServer(char* serverName, int port) {
 	printf("sock = %d\n", sock);
 	printf("connect to server2	\n");
 	return true;
+}
+
+void PConnector::initRemote() {
+	ssm_msg msg;
+	char *msg_buf = (char*)malloc(sizeof(ssm_msg));
+	connectToServer("127.0.0.1", 8080);
+	if(!sendMsgToServer(MC_INITIALIZE, NULL)) {
+		fprintf(stderr, "error in initRemote\n");
+	}
+	if (recvMsgFromServer(&msg, msg_buf)) {
+		printf("msg = %d\n", (int)msg.cmd_type);
+	} else {
+		fprintf(stderr, "fail recvMsg\n");
+	}
+	free(msg_buf);
+
 }
 
 void PConnector::serializeMessage(ssm_msg *msg, char *buf) {
@@ -132,7 +163,8 @@ bool PConnector::sendMsgToServer(int cmd_type, ssm_msg *msg) {
 	writeInt(&p, msg->suid);
 	writeLong(&p, msg->ssize);
 	writeLong(&p, msg->hsize);
-	writeLong(&p, msg->time);
+	writeDouble(&p, msg->time);
+	//writeLong(&p, msg->time);
 
 	/*
 	for (int i = 0; i < sizeof(ssm_msg); ++i) {
@@ -144,8 +176,27 @@ bool PConnector::sendMsgToServer(int cmd_type, ssm_msg *msg) {
 
 	if (send(sock, buf, sizeof(ssm_msg), 0) == -1) {
 		fprintf(stderr, "error happens\n");
+		free(buf);
+		return false;
 	}
 	free(buf);
-
 	return true;
+}
+
+void PConnector::setBuffer(void *data, size_t dataSize, void *property, size_t propertySize) {
+	mData = data;
+	mDataSize = dataSize;
+	mProperty = property;
+	mPropertySize = propertySize;
+	//printf("data size = %d, propertysize = %d\n", mDataSize, mPropertySize);
+}
+
+void PConnector::setStream(const char *streamName, int streamId = 0) {
+	this->streamName = streamName;
+	this->streamId = streamId;
+}
+
+bool PConnector::create(const char *streamName, int streamId, double saveTime, double cycle) {
+	setStream(streamName, streamId);
+
 }
