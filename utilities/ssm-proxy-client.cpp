@@ -1,11 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
+#include <iostream>
+
+#include "ssm.h"
 #include "ssm-proxy-client.hpp"
 
 PConnector::PConnector() {
 	printf("PConnector constructor\n");
 	sock = -1;
+	mDataSize = 0;
+	streamId = 0;
+	mData = NULL;
+	mProperty = NULL;
+	mPropertySize = 0;
+	streamName = "";
+
 }
 
 PConnector::~PConnector() {
@@ -146,6 +157,7 @@ bool PConnector::sendMsgToServer(int cmd_type, ssm_msg *msg) {
 	msg->res_type = 8;
 	msg->cmd_type = cmd_type;
 	/* dummy start */
+	/*
 	for (int i = 0; i < 10; ++i) {
 		msg->name[i] = 0x61 + i;
 	}
@@ -153,6 +165,7 @@ bool PConnector::sendMsgToServer(int cmd_type, ssm_msg *msg) {
 	msg->ssize = 17;
 	msg->hsize = 18;
 	msg->time = 4.2;
+	*/
 	/* dummy end */
 	buf = (char*)malloc(sizeof(ssm_msg));
 	p = buf;
@@ -196,7 +209,81 @@ void PConnector::setStream(const char *streamName, int streamId = 0) {
 	this->streamId = streamId;
 }
 
+void PConnector::createRemoteSSM( const char *name, int stream_id, size_t ssm_size, ssmTimeT life, ssmTimeT cycle ) {
+	ssm_msg msg;
+	int open_mode = SSM_READ | SSM_WRITE;
+	size_t len;
+
+	/* initialize check */
+	if( !name ) {
+		fprintf( stderr, "SSM ERROR : create : stream name is NOT defined, err.\n" );
+		exit(1);
+	}
+	len = strlen( name );
+	if( len == 0 || len >= SSM_SNAME_MAX ) {
+		fprintf( stderr, "SSM ERROR : create : stream name length of '%s' err.\n", name );
+		exit(1);
+	}
+
+	if( stream_id < 0 ) {
+		fprintf( stderr, "SSM ERROR : create : stream id err.\n" );
+		exit(1);
+	}
+
+	if( life <= 0.0 ) {
+		fprintf( stderr, "SSM ERROR : create : stream life time err.\n" );
+		exit(1);
+	}
+
+	if( cycle <= 0.0 ) {
+		fprintf( stderr, "SSM ERROR : create : stream cycle err.\n" );
+		exit(1);
+	}
+
+	if( life < cycle ) {
+		fprintf( stderr, "SSM ERROR : create : stream saveTime MUST be larger than stream cycle.\n" );
+		exit(1);
+	}
+
+	strncpy( msg.name, name, SSM_SNAME_MAX );
+	msg.suid = stream_id;
+	msg.ssize = ssm_size;
+	msg.hsize = calcSSM_table( life, cycle ) ;	/* table size */
+	msg.time = cycle;
+
+	printf("msg.suid  = %d\n", msg.suid);
+	printf("msg.ssize = %d\n", msg.ssize);
+	printf("msg.hsize  = %d\n", msg.hsize);
+	printf("msg.time  = %f\n", msg.time);
+
+	char *msg_buf = (char*)malloc(sizeof(ssm_msg));
+	if (!sendMsgToServer(MC_CREATE | open_mode, &msg)) {
+		fprintf(stderr, "error in createRemoteSSM\n");
+	}
+	if (recvMsgFromServer(&msg, msg_buf)) {
+		printf("msg %d\n", (int)msg.cmd_type);
+	} else {
+		fprintf(stderr, "fail recvMsg\n");
+	}
+	free(msg_buf);
+
+
+
+}
+
+bool PConnector::create(double saveTime, double cycle) {
+	if( !mDataSize )	{
+		std::cerr << "SSM::create() : data buffer of ''" << streamName << "', id = " << streamId << " is not allocked." << std::endl;
+		return false;
+	}
+
+	this->createRemoteSSM(streamName, streamId, mDataSize, saveTime, cycle);
+
+	return true;
+}
+
 bool PConnector::create(const char *streamName, int streamId, double saveTime, double cycle) {
 	setStream(streamName, streamId);
-
+	create(saveTime, cycle);
+	return true;
 }

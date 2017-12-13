@@ -169,7 +169,7 @@ public:
 			printf("use network\n");
 			printf("saveTime = %f\n", saveTime);
 			printf("cycle = %f\n", log.getCycle());
-
+			con->create(log.getStreamName(), log.getStreamId(), saveTime, log.getCycle());
 			exit(1); // for test
 		} else {
 			if( !stream.create( log.getStreamName(), log.getStreamId(), saveTime, log.getCycle() ) )

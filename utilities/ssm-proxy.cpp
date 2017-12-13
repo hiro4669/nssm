@@ -166,7 +166,7 @@ void ProxyServer::serializeMessage(ssm_msg *msg, char *buf) {
 	msg->time = readDouble(&buf);
 
 
-	/*
+
 	printf("msg_type = %d\n", msg->msg_type);
 	printf("res_type = %d\n", msg->res_type);
 	printf("cmd_type = %d\n", msg->cmd_type);
@@ -180,7 +180,7 @@ void ProxyServer::serializeMessage(ssm_msg *msg, char *buf) {
 	printf("ssize = %d\n", msg->ssize);
 	printf("hsize = %d\n", msg->hsize);
 	printf("time = %f\n", msg->time);
-	*/
+
 }
 
 int ProxyServer::receiveMsg(ssm_msg *msg, char *buf) {
@@ -239,6 +239,12 @@ void ProxyServer::handleCommand() {
 				fprintf(stderr, "init ssm error in ssm-proxy\n");
 			}
 			*/
+			sendMsg(MC_RES, &msg);
+			break;
+		}
+		case MC_CREATE: {
+			printf("MC_CREATE\n");
+
 			sendMsg(MC_RES, &msg);
 			break;
 		}

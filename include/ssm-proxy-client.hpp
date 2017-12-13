@@ -46,6 +46,8 @@ public:
 	void setStream(const char *streamName, int streamId);
 	void setBuffer(void *data, size_t dataSize, void *property, size_t propertySize);
 	bool create(const char *streamName, int streamId, double saveTime, double cycle);
+	bool create(double saveTime, double cycle);
+	void createRemoteSSM( const char *name, int stream_id, size_t ssm_size, ssmTimeT life, ssmTimeT cycle );
 
 
 };
