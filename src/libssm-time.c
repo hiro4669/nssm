@@ -126,6 +126,19 @@ ssmTimeT gettimeSSM( void )
 	return gettimeSSM_real();
 }
 
+ssmTimeT gettimeOffset() {
+	if (timecontrol != NULL) {
+		return timecontrol->offset;
+	}
+	return 0.0;
+}
+
+void settimeOffset(ssmTimeT offset) {
+	if (timecontrol != NULL) {
+		timecontrol->offset = offset;
+	}
+}
+
 
 /* SSM時刻を設定 */
 int settimeSSM( ssmTimeT time )
@@ -133,6 +146,8 @@ int settimeSSM( ssmTimeT time )
 	if(timecontrol != NULL)
 	{
 		timecontrol->offset = time - timecontrol->speed * gettimeSSM_real();
+		printf("timecontrol is not null!\n");
+		printf("offset = %f", timecontrol->offset);
 		timecontrol->pausetime = time;
 		return 1;
 	}

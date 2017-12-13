@@ -52,6 +52,7 @@ public:
 	bool create(const char *streamName, int streamId, double saveTime, double cycle);
 	bool create(double saveTime, double cycle);
 	bool setProperty();
+	void setOffset(ssmTimeT offset);
 
 
 

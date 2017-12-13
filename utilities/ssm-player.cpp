@@ -177,7 +177,7 @@ public:
 				return false;
 			}
 
-			exit(1); // for test
+			//exit(1); // for test
 		} else {
 			if( !stream.create( log.getStreamName(), log.getStreamId(), saveTime, log.getCycle() ) )
 				return false;
@@ -257,6 +257,12 @@ public:
 		printf("init remote\n");
 		if (useNetwork) {
 			con->initRemote();
+		}
+	}
+
+	void setOffset(ssmTimeT offset) {
+		if (useNetwork) {
+			con->setOffset(offset);
 		}
 	}
 };
@@ -405,7 +411,6 @@ public:
 		
 		logVerbose << "startTime : " << startTime << endl;
 		settimeSSM( startTime );
-		
 		settimeSSM_is_pause( 0 );
 		
 		return true;
@@ -540,6 +545,12 @@ void nproc_start(MyParam& param) {
 	LogPlayerArray::iterator log;
 	char command[128];
 
+	if(!opentimeSSM() ){
+		fprintf(stderr, "errororororo!\n");
+	} else {
+		printf("init opentimeSSM\n");
+	}
+
 	log = param.logArray.begin();
 	while (log != param.logArray.end()) {
 		log->setUseNetwork(true);
@@ -547,14 +558,77 @@ void nproc_start(MyParam& param) {
 		// logの中のPConnectorからMC_INITIALIZEを発行する
 		log++;
 	}
+
 	setSigInt();
 
 	// ログファイルの展開とストリームの作成
 	param.logOpen();
-	//param.printProgressInit();
+	param.printProgressInit();
 
-//	logInfo << "  start" << endl << endl;
-	//logInfo << "\033[1A" << "> " << flush;
+	log = param.logArray.begin(  );
+	log->setOffset(gettimeOffset()); // リモートにオフセットを設定
+
+	// timecontrolのオフセットをプロ棋士に送る必要があるかも
+
+	logInfo << "  start" << endl << endl;
+	logInfo << "\033[1A" << "> " << flush;
+
+	// メインループ
+
+	/*
+	ssmTimeT time, printTime;
+	bool isWorking;
+	int playCnt; // 再生中のログの個数
+	printTime = gettimeSSM_real(  );
+
+	while( !gShutOff ) {
+		isWorking = false;
+		playCnt = 0;
+		// 現在時刻の取得
+		time = gettimeSSM(  );
+		// ログの再生
+		log = param.logArray.begin(  );
+		while( log != param.logArray.end(  ) ) {
+			isWorking |= ( gettimeSSM_speed(  ) >= 0 ? log->play( time ) : log->playBack( time ) );
+			if( log->isPlaying(  ) )
+				playCnt++;
+			log++;
+		}
+		// 終了判定
+		if( !playCnt || time > param.endTime )
+		{
+			// ループするかどうか
+			if( param.isLoop )
+			{
+				param.seek( param.startTime );
+			}
+			else
+			{
+				gShutOff = true;
+				break;
+			}
+		}
+		// ステータスの表示
+		if( gettimeSSM_real(  ) >= printTime )
+		{
+			printTime += 1.0;
+			param.printProgress( time );
+		}
+
+		// コマンド解析
+		{
+			// cinがノンブロッキングできないのでしょうがなくstdinを使うことにする。
+			// 時間があればマルチスレッドとかにしても良いけど、同期が面倒
+			if( fgets(command, sizeof(command), stdin ) )
+				param.commandAnalyze( command );
+		}
+		// wait
+		if( !isWorking )
+			usleepSSM( 1000 ); // 1msスリープ
+	}
+	*/
+
+
 }
 
 // SSMのログ再生

@@ -266,7 +266,11 @@ void ProxyServer::handleCommand() {
 
 			free(buf);
 
-
+			break;
+		}
+		case MC_OFFSET: {
+			printf("MC_OFFSET\n");
+			sendMsg(MC_RES, &msg);
 			break;
 		}
 		default: {

@@ -345,4 +345,19 @@ bool PConnector::setPropertyRemoteSSM(const char *name, int sensor_uid, const vo
 	return true;
 }
 
+void PConnector::setOffset(ssmTimeT offset) {
 
+	printf("offset = %f\n", offset);
+	ssm_msg msg;
+	msg.hsize = 0;
+	msg.ssize = 0;
+	msg.time = offset;
+	char *msg_buf = (char*)malloc(sizeof(ssm_msg));
+	if (!sendMsgToServer(MC_OFFSET, &msg)) {
+		fprintf(stderr, "error in setOffset\n");
+	}
+	if (recvMsgFromServer(&msg, msg_buf)) {
+		printf("msg res offset %d\n", (int)msg.cmd_type);
+	}
+	free(msg_buf);
+}

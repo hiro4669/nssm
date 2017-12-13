@@ -61,6 +61,8 @@ enum
 	MC_EDGE_LIST_NUM,							///< ノードを繋ぐエッジの数
 	MC_EDGE_LIST_INFO,							///< エッジ情報の取得
 	
+	MC_OFFSET,                               // オフセットの設定
+
 	MC_RES = 31									///< コマンドに対する返信
 };
 
@@ -172,6 +174,8 @@ extern "C"
 	int gettimeSSM_is_pause( void );
 	int settimeSSM_is_reverse( int is_reverse );
 	int gettimeSSM_is_reverse( void );
+	ssmTimeT gettimeOffset();
+	void settimeOffset(ssmTimeT offset);
 	
 
 #ifdef __cplusplus
