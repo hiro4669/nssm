@@ -196,6 +196,14 @@ bool PConnector::sendMsgToServer(int cmd_type, ssm_msg *msg) {
 	return true;
 }
 
+bool PConnector::sendData(const char *data, size_t size) {
+	if (send(sock, data, size, 0) == -1) {
+		fprintf(stderr, "error in sendData\n");
+		return false;
+	}
+	return true;
+}
+
 void PConnector::setBuffer(void *data, size_t dataSize, void *property, size_t propertySize) {
 	mData = data;
 	mDataSize = dataSize;
@@ -267,8 +275,6 @@ void PConnector::createRemoteSSM( const char *name, int stream_id, size_t ssm_si
 	}
 	free(msg_buf);
 
-
-
 }
 
 bool PConnector::create(double saveTime, double cycle) {
@@ -278,7 +284,6 @@ bool PConnector::create(double saveTime, double cycle) {
 	}
 
 	this->createRemoteSSM(streamName, streamId, mDataSize, saveTime, cycle);
-
 	return true;
 }
 
@@ -287,3 +292,57 @@ bool PConnector::create(const char *streamName, int streamId, double saveTime, d
 	create(saveTime, cycle);
 	return true;
 }
+
+bool PConnector::setProperty() {
+	if (mPropertySize > 0) {
+		setPropertyRemoteSSM(streamName, streamId, mProperty, mPropertySize);
+		return true;
+	} else {
+		return false;
+	}
+
+}
+
+bool PConnector::setPropertyRemoteSSM(const char *name, int sensor_uid, const void *adata, size_t size) {
+	ssm_msg msg;
+	char *ptr;
+	const char *data = ( char * )adata;
+	if( strlen( name ) > SSM_SNAME_MAX ) {
+		fprintf(stderr, "name length error\n");
+		return 0;
+	}
+
+	/* メッセージをセット */
+	strncpy( msg.name, name, SSM_SNAME_MAX );
+	msg.suid = sensor_uid;
+	msg.ssize = size;
+	msg.hsize = 0;
+	msg.time = 0;
+
+	char *msg_buf = (char*)malloc(sizeof(ssm_msg));
+	if (!sendMsgToServer(MC_STREAM_PROPERTY_SET, &msg)) {
+		fprintf(stderr, "error in setPropertyRemoteSSM\n");
+	}
+	if (recvMsgFromServer(&msg, msg_buf)) {
+		printf("msg %d\n", (int)msg.cmd_type);
+
+		/*
+		for (int i = 0; i < 16; ++i) {
+			printf("%02x ", data[i]);
+		}
+		printf("\n");
+		*/
+		sendData(data, size);
+		if (recvMsgFromServer(&msg, msg_buf)) {
+			printf("sendData ack msg %d\n", (int)msg.cmd_type);
+		}
+
+	} else {
+		fprintf(stderr, "fail recvMsg\n");
+	}
+	free(msg_buf);
+
+	return true;
+}
+
+

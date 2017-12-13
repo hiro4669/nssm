@@ -33,6 +33,10 @@ private:
 	void readRawData(char **p, char *d, int len);
 
 	void serializeMessage(ssm_msg *msg, char *buf);
+	void createRemoteSSM( const char *name, int stream_id, size_t ssm_size, ssmTimeT life, ssmTimeT cycle );
+	bool setPropertyRemoteSSM(const char *name, int sensor_uid, const void *adata, size_t size);
+
+	bool sendData(const char *data, size_t size);
 
 public:
 	PConnector();
@@ -47,7 +51,9 @@ public:
 	void setBuffer(void *data, size_t dataSize, void *property, size_t propertySize);
 	bool create(const char *streamName, int streamId, double saveTime, double cycle);
 	bool create(double saveTime, double cycle);
-	void createRemoteSSM( const char *name, int stream_id, size_t ssm_size, ssmTimeT life, ssmTimeT cycle );
+	bool setProperty();
+
+
 
 
 };

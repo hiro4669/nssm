@@ -248,6 +248,27 @@ void ProxyServer::handleCommand() {
 			sendMsg(MC_RES, &msg);
 			break;
 		}
+		case MC_STREAM_PROPERTY_SET: {
+			printf("MC_STREAM_PROPERTY_SET\n");
+			char *buf = (char*)malloc(msg.ssize);
+			sendMsg(MC_RES, &msg);
+			int len = recv(this->client.data_socket, buf, msg.ssize, 0);
+			/*
+			for (int i = 0; i < 16; ++i) {
+				printf("%02x ", buf[i]);
+			}
+			printf("\n");
+			*/
+			if (len > 0) {
+				printf("receive property\n");
+				sendMsg(MC_RES, &msg);
+			}
+
+			free(buf);
+
+
+			break;
+		}
 		default: {
 			fprintf(stderr, "NOTICE : unknown msg %d", msg.cmd_type);
 			break;
