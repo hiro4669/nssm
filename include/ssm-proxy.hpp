@@ -29,6 +29,9 @@ private:
 	TCPSERVER_INFO server;
 	TCPCLIENT_INFO client;
 
+	char* mData;
+	size_t mDataSize;
+
 	bool open();
 	bool wait();
 

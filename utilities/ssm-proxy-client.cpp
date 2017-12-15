@@ -13,6 +13,7 @@ PConnector::PConnector() {
 	mDataSize = 0;
 	streamId = 0;
 	mData = NULL;
+	mFullData = NULL;
 	mProperty = NULL;
 	mPropertySize = 0;
 	streamName = "";
@@ -204,11 +205,12 @@ bool PConnector::sendData(const char *data, size_t size) {
 	return true;
 }
 
-void PConnector::setBuffer(void *data, size_t dataSize, void *property, size_t propertySize) {
+void PConnector::setBuffer(void *data, size_t dataSize, void *property, size_t propertySize, void* fulldata) {
 	mData = data;
 	mDataSize = dataSize;
 	mProperty = property;
 	mPropertySize = propertySize;
+	mFullData = fulldata;
 	//printf("data size = %d, propertysize = %d\n", mDataSize, mPropertySize);
 }
 
@@ -351,6 +353,7 @@ void PConnector::setOffset(ssmTimeT offset) {
 	ssm_msg msg;
 	msg.hsize = 0;
 	msg.ssize = 0;
+	msg.suid = 0;
 	msg.time = offset;
 	char *msg_buf = (char*)malloc(sizeof(ssm_msg));
 	if (!sendMsgToServer(MC_OFFSET, &msg)) {

@@ -19,6 +19,7 @@ protected:
 	size_t mDataSize;							///< データ構造体のサイズ
 	void *mProperty;							///< プロパティのポインタ
 	size_t mPropertySize;						///< プロパティサイズ
+	void *mFullData;
 	int mStreamId;								///< ストリームID
 	int mBufferNum;								///< ssmのリングバッファの個数
 	double mCycle;								///< streamへの書き込みサイクル
@@ -147,12 +148,13 @@ public:
 	virtual ~SSMLogBase()
 	{
 	}
-	void setBuffer(void *data, size_t dataSize, void *property, size_t propertySize )
+	void setBuffer(void *data, size_t dataSize, void *property, size_t propertySize, void *fulldata)
 	{
 		mData = data;
 		mDataSize = dataSize;
 		mProperty = property;
 		mPropertySize = propertySize;
+		mFullData = fulldata;
 	}
 
 	/**
@@ -241,6 +243,49 @@ public:
 		return mLogFile->good(  );
 	}
 	
+	virtual bool readFull() {
+		printf("readFull\n");
+
+		// これが今までのやり方を真似たやつ
+		double mlTime;
+		mLogFile->read( (char *)&mTime, sizeof( ssmTimeT ) ); // この処理が重い．．なぜか．．
+		mLogFile->read( &((char *)mFullData)[8], mDataSize );
+		*((ssmTimeT*)mFullData) = mTime;
+		mlTime = *(reinterpret_cast<double*>(mFullData));
+		printf("mlTime = %f\n", mlTime);
+		char *p = &((char*)mFullData)[8];
+
+		for (int i = 0; i < 8; ++i) {
+			printf("%02x ", p[i] & 0xff);
+		}
+		printf("\n");
+
+
+		/*// これが最も効率的だと思うやつ
+		double mlTime;
+		mLogFile->read((char*)mFullData, sizeof(ssmTimeT) + mDataSize);
+		mlTime = *(reinterpret_cast<double*>(mFullData));
+		char *p = &((char*)mFullData)[8];
+
+		printf("mlTime = %f\n", mlTime);
+		for (int i = 0; i < 8; ++i) {
+			printf("%02x ", p[i] & 0xff);
+		}
+		printf("\n");
+		 */
+
+		/*//いままでのやつ．参考にならず
+		mLogFile->read( (char *)&mTime, sizeof( ssmTimeT ) );
+		mLogFile->read( (char *)mData, mDataSize );
+		printf("mTime = %f\n", mTime);
+		for (int i = 0; i < 8; ++i) {
+			printf("%02x ", ((char*)mData)[i] & 0xff);
+		}
+		printf("\n");
+	*/
+		return mLogFile->good(  );
+	}
+
 	
 	/**
 	 * @brief 指定したデータ数分シークする
@@ -335,6 +380,24 @@ public:
 	
 	const int &getBufferNum(  ) const { return mBufferNum; }
 };
+
+class SSMNetworkLogBase : public SSMLogBase {
+public:
+	SSMNetworkLogBase() {
+	}
+
+	~SSMNetworkLogBase() {
+	}
+
+	bool read(  )
+	{
+		printf("hogehoge\n");
+		mLogFile->read( (char *)&mTime, sizeof( ssmTimeT ) );
+		mLogFile->read( (char *)mData, mDataSize );
+		return mLogFile->good(  );
+	}
+};
+
 
 
 

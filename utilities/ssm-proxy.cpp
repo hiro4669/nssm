@@ -10,6 +10,7 @@
 #include <errno.h>
 
 #include "libssm.h"
+#include "ssm.h"
 
 #include "printlog.hpp"
 
@@ -19,10 +20,14 @@ extern pid_t my_pid; // for debug
 
 ProxyServer::ProxyServer() {
 	printf("Proxy Server created\n");
+	mData = NULL;
+	mDataSize = 0;
 }
 
 ProxyServer::~ProxyServer() {
 	printf("proxy server deleted\n");
+	free(mData);
+	mData = NULL;
 }
 
 bool ProxyServer::init() {
@@ -173,7 +178,7 @@ void ProxyServer::serializeMessage(ssm_msg *msg, char *buf) {
 
 
 	for (int i = 0; i < 10; ++i) {
-		printf("%02x ", msg->name[i]);
+		printf("%02x ", msg->name[i] & 0xff);
 	}
 	printf("\n");
 	printf("suid = %d\n", msg->suid);
@@ -244,6 +249,14 @@ void ProxyServer::handleCommand() {
 		}
 		case MC_CREATE: {
 			printf("MC_CREATE\n");
+			printf("ssm_size = %d\n", msg.ssize);
+			mDataSize = msg.ssize;
+			mData = (char*)malloc(mDataSize + sizeof(ssmTimeT));
+			if (mData == NULL) {
+				fprintf(stderr, "fail to create mData\n");
+			} else {
+				printf("mData is created\n");
+			}
 
 			sendMsg(MC_RES, &msg);
 			break;

@@ -152,7 +152,7 @@ int main( int aArgc, char **aArgv )
 		if( ( property = malloc( propertySize ) ) == NULL )
 			throw runtime_error("memory allocation of property");
 
-		log.setBuffer( data, dataSize, property, propertySize );
+		log.setBuffer( data, dataSize, property, propertySize, NULL );
 		stream.setBuffer( data, dataSize, property, propertySize );
 				
 		// ストリームを開く

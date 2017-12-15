@@ -28,6 +28,8 @@ using namespace std;
 
 bool gShutOff = false;
 
+int write_count = 0;
+
 void ctrlC( int aStatus )
 {
 	// exit(aStatus); // デストラクタが呼ばれないのでダメ
@@ -70,6 +72,7 @@ class LogPlayer
 	size_t dataSize;
 	SSMApiBase stream;
 	SSMLogBase log;
+	void *fulldata;
 	
 	/* added for network */
 	bool useNetwork;
@@ -81,8 +84,10 @@ class LogPlayer
 	bool mIsPlaying;
 	void init(  )
 	{
+		printf("init!!!\n");
 		data = NULL;
 		property = NULL;
+		fulldata = NULL;
 		dataSize = 0;
 		propertySize = 0;
 		readCnt = 0;
@@ -124,10 +129,13 @@ public:
 	{
 		free( data );
 		free( property );
+		free(fulldata);
 		data = NULL;
 		property = NULL;
-		delete con;
+		fulldata = NULL;
 
+		delete con;
+		con = NULL;
 	}
 	
 	// openしたら必ずcloseすること！
@@ -140,26 +148,33 @@ public:
 		propertySize = log.propertySize(  );
 		data = malloc( dataSize );
 		property = malloc( propertySize );
+		fulldata = malloc(dataSize + sizeof(ssmTimeT));
 		
-		if( ( data == NULL ) || ( propertySize && property == NULL ))
+		if( ( data == NULL ) || (fulldata == NULL) || ( propertySize && property == NULL ))
 		{
 			log.close();
 			free( data );
 			free( property );
-			data = property = NULL;
+			free(fulldata);
+			data = property = fulldata = NULL;
 			return false;
 		}
-		log.setBuffer( data, dataSize, property, propertySize );
+		log.setBuffer( data, dataSize, property, propertySize, fulldata ); // fulldata is for network
 		stream.setBuffer( data, dataSize, property, propertySize );
 
 		/* For Network */
 		if (useNetwork) {
-			con->setBuffer(data, dataSize, property, propertySize);
+			con->setBuffer(data, dataSize, property, propertySize, fulldata);
 		}
 		
 		log.readProperty(  );
-		log.readNext(  );
-		
+		/* For Network*/
+		if (useNetwork) {
+			log.readFull();
+		} else { // これはバグじゃないか？
+			log.readNext(  );
+		}
+
 		ssmTimeT saveTime;
 		saveTime = calcSSM_life( log.getBufferNum(  ), log.getCycle(  ) );
 		logVerbose << "> "<< log.getStreamName() << ", " << log.getStreamId() << ", " << saveTime << ", " << log.getCycle() << endl;
@@ -210,14 +225,27 @@ public:
 	{
 		if( readCnt == writeCnt )
 		{
-			if( ( mIsPlaying = log.readNext(  ) )  )
-				readCnt++;
+			if (useNetwork) {
+				if ((mIsPlaying = log.readFull()))
+					readCnt++;
+			} else {
+				if( ( mIsPlaying = log.readNext(  ) )  )
+					readCnt++;
+			}
 		}
 
 		if( log.time(  ) <= time && writeCnt < readCnt )
 		{
+			write_count++; // for test
 			// log時間でのstreamへの書き込み
-			stream.write( log.time(  ) );
+			if (useNetwork) {
+				//printf("write---\n");
+			} else {
+				stream.write( log.time(  ) );
+			}
+
+
+
 			writeCnt = readCnt;
 			return true;
 		}
@@ -575,13 +603,20 @@ void nproc_start(MyParam& param) {
 
 	// メインループ
 
-	/*
+
 	ssmTimeT time, printTime;
 	bool isWorking;
 	int playCnt; // 再生中のログの個数
 	printTime = gettimeSSM_real(  );
-
+	int count = 0;  // test
 	while( !gShutOff ) {
+		++count;
+		if (write_count > 31) {
+			printf("end of log play\n");
+			printf("count = %d\n", count);
+			ctrlC(1);
+		}
+
 		isWorking = false;
 		playCnt = 0;
 		// 現在時刻の取得
@@ -626,7 +661,7 @@ void nproc_start(MyParam& param) {
 		if( !isWorking )
 			usleepSSM( 1000 ); // 1msスリープ
 	}
-	*/
+
 
 
 }

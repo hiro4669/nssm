@@ -20,6 +20,7 @@ private:
 	size_t mDataSize;						///< データ構造体のサイズ
 	void *mProperty;							///< プロパティのポインタ
 	size_t mPropertySize;					///< プロパティサイズ
+	void *mFullData;
 
 
 	void writeInt(char **p, int v);
@@ -48,7 +49,7 @@ public:
 
 	void initRemote();
 	void setStream(const char *streamName, int streamId);
-	void setBuffer(void *data, size_t dataSize, void *property, size_t propertySize);
+	void setBuffer(void *data, size_t dataSize, void *property, size_t propertySize, void *fulldata);
 	bool create(const char *streamName, int streamId, double saveTime, double cycle);
 	bool create(double saveTime, double cycle);
 	bool setProperty();
