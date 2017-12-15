@@ -22,6 +22,7 @@ ProxyServer::ProxyServer() {
 	printf("Proxy Server created\n");
 	mData = NULL;
 	mDataSize = 0;
+	ssmTimeSize = sizeof(ssmTimeT);
 }
 
 ProxyServer::~ProxyServer() {
@@ -188,6 +189,15 @@ void ProxyServer::serializeMessage(ssm_msg *msg, char *buf) {
 
 }
 
+void ProxyServer::receiveData() {
+	size_t total_len = mDataSize + ssmTimeSize;
+	while(true) {
+		printf("wait bulk data\n");
+		int len = recv(this->client.data_socket, mData, total_len, 0);
+		if (len != total_len) break;
+	}
+}
+
 int ProxyServer::receiveMsg(ssm_msg *msg, char *buf) {
 	int len = recv(this->client.data_socket, buf, sizeof(ssm_msg), 0);
 	if (len > 0) {
@@ -284,6 +294,8 @@ void ProxyServer::handleCommand() {
 		case MC_OFFSET: {
 			printf("MC_OFFSET\n");
 			sendMsg(MC_RES, &msg);
+
+			receiveData();
 			break;
 		}
 		default: {
