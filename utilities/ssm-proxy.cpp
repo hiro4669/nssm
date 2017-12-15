@@ -189,12 +189,30 @@ void ProxyServer::serializeMessage(ssm_msg *msg, char *buf) {
 
 }
 
-void ProxyServer::receiveData() {
-	size_t total_len = mDataSize + ssmTimeSize;
+bool ProxyServer::receiveData() {
+	char *p;
+	int len = recv(this->client.data_socket, mData, mFullDataSize, 0);
+	if (len != mFullDataSize) {
+		return false;
+	}
+	return true;
+}
+void ProxyServer::handleData() {
+	char *p;
+	ssmTimeT time;
 	while(true) {
 		printf("wait bulk data\n");
-		int len = recv(this->client.data_socket, mData, total_len, 0);
-		if (len != total_len) break;
+		if (!receiveData()) {
+			fprintf(stderr, "receiveData error happens!\n");
+			break;
+		}
+		p = &mData[8];
+		time = *(reinterpret_cast<ssmTimeT*>(mData));
+		printf("time = %f\n", time);
+		for (int i = 0; i < 8; ++i) {
+			printf("%02x ", p[i] & 0xff);
+		}
+		printf("\n");
 	}
 }
 
@@ -261,7 +279,8 @@ void ProxyServer::handleCommand() {
 			printf("MC_CREATE\n");
 			printf("ssm_size = %d\n", msg.ssize);
 			mDataSize = msg.ssize;
-			mData = (char*)malloc(mDataSize + sizeof(ssmTimeT));
+			mFullDataSize = mDataSize + sizeof(ssmTimeT);
+			mData = (char*)malloc(mFullDataSize);
 			if (mData == NULL) {
 				fprintf(stderr, "fail to create mData\n");
 			} else {
@@ -295,7 +314,7 @@ void ProxyServer::handleCommand() {
 			printf("MC_OFFSET\n");
 			sendMsg(MC_RES, &msg);
 
-			receiveData();
+			handleData();
 			break;
 		}
 		default: {

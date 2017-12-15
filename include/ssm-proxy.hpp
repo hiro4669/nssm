@@ -32,6 +32,7 @@ private:
 	char* mData;
 	size_t mDataSize;
 	size_t ssmTimeSize;
+	size_t mFullDataSize;
 
 	bool open();
 	bool wait();
@@ -52,7 +53,8 @@ private:
 	int receiveMsg(ssm_msg *msg, char *buf);
 	int sendMsg(int cmd_type, ssm_msg *msg);
 
-	void receiveData();
+	bool receiveData();
+	void handleData();
 
 public:
 	ProxyServer();

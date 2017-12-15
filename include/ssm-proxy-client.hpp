@@ -21,6 +21,7 @@ private:
 	void *mProperty;							///< プロパティのポインタ
 	size_t mPropertySize;					///< プロパティサイズ
 	void *mFullData;
+	size_t mFullDataSize;
 
 
 	void writeInt(char **p, int v);
@@ -54,6 +55,8 @@ public:
 	bool create(double saveTime, double cycle);
 	bool setProperty();
 	void setOffset(ssmTimeT offset);
+
+	bool write( ssmTimeT time); // write bulkdata with time
 
 
 

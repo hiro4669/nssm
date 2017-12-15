@@ -251,8 +251,8 @@ public:
 		mLogFile->read( (char *)&mTime, sizeof( ssmTimeT ) ); // この処理が重い．．なぜか．．
 		mLogFile->read( &((char *)mFullData)[8], mDataSize );
 		*((ssmTimeT*)mFullData) = mTime;
-		mlTime = *(reinterpret_cast<double*>(mFullData));
-		printf("mlTime = %f\n", mlTime);
+		//mlTime = *(reinterpret_cast<double*>(mFullData));
+		printf("mlTime = %f\n", mTime);
 		char *p = &((char*)mFullData)[8];
 
 		for (int i = 0; i < 8; ++i) {

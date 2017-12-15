@@ -17,6 +17,8 @@ PConnector::PConnector() {
 	mProperty = NULL;
 	mPropertySize = 0;
 	streamName = "";
+	mFullData = NULL;
+	mFullDataSize = 0;
 
 }
 
@@ -148,6 +150,25 @@ bool PConnector::recvMsgFromServer(ssm_msg *msg, char *buf) {
 	return false;
 }
 
+bool PConnector::write( ssmTimeT time = gettimeSSM(  ) ) {
+	/*
+	printf("full size = %d\n", mFullDataSize);
+	char *p = &((char*)mFullData)[8];
+
+	for (int i = 0; i < 8; ++i) {
+		printf("%02x ", p[i] & 0xff);
+	}
+	printf("\n");
+	*/
+
+	if (send(sock, mFullData, mFullDataSize, 0) == -1) {
+		fprintf(stderr, "error happen!!!!");
+		return false;
+	}
+
+	return true;
+}
+
 bool PConnector::sendMsgToServer(int cmd_type, ssm_msg *msg) {
 	ssm_msg msgbuf;
 	char *buf, *p;
@@ -157,17 +178,7 @@ bool PConnector::sendMsgToServer(int cmd_type, ssm_msg *msg) {
 	msg->msg_type = 1; // dummy
 	msg->res_type = 8;
 	msg->cmd_type = cmd_type;
-	/* dummy start */
-	/*
-	for (int i = 0; i < 10; ++i) {
-		msg->name[i] = 0x61 + i;
-	}
-	msg->suid = 16;
-	msg->ssize = 17;
-	msg->hsize = 18;
-	msg->time = 4.2;
-	*/
-	/* dummy end */
+
 	buf = (char*)malloc(sizeof(ssm_msg));
 	p = buf;
 	writeLong(&p, msg->msg_type);
@@ -178,15 +189,6 @@ bool PConnector::sendMsgToServer(int cmd_type, ssm_msg *msg) {
 	writeLong(&p, msg->ssize);
 	writeLong(&p, msg->hsize);
 	writeDouble(&p, msg->time);
-	//writeLong(&p, msg->time);
-
-	/*
-	for (int i = 0; i < sizeof(ssm_msg); ++i) {
-		if (i % 16 == 0) printf("\n");
-		printf("%02x ", buf[i] & 0xff);
-	}
-	printf("\n");
-	*/
 
 	if (send(sock, buf, sizeof(ssm_msg), 0) == -1) {
 		fprintf(stderr, "error happens\n");
@@ -211,6 +213,7 @@ void PConnector::setBuffer(void *data, size_t dataSize, void *property, size_t p
 	mProperty = property;
 	mPropertySize = propertySize;
 	mFullData = fulldata;
+	mFullDataSize = mDataSize + sizeof(ssmTimeT);
 	//printf("data size = %d, propertysize = %d\n", mDataSize, mPropertySize);
 }
 
