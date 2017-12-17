@@ -185,11 +185,12 @@ public:
 			printf("use network\n");
 			printf("saveTime = %f\n", saveTime);
 			printf("cycle = %f\n", log.getCycle());
-			con->create(log.getStreamName(), log.getStreamId(), saveTime, log.getCycle());
+			if (!con->create(log.getStreamName(), log.getStreamId(), saveTime, log.getCycle())) {
+				return false;
+			}
 
 			if (propertySize && !con->setProperty()) {
 				fprintf(stderr, "error in setProperty\n");
-				exit(1);
 				return false;
 			}
 

@@ -23,6 +23,7 @@ ProxyServer::ProxyServer() {
 	mData = NULL;
 	mDataSize = 0;
 	ssmTimeSize = sizeof(ssmTimeT);
+	mFullDataSize = 0;
 }
 
 ProxyServer::~ProxyServer() {
