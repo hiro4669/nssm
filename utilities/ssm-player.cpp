@@ -285,11 +285,12 @@ public:
 		con = new PConnector();
 	}
 
-	void initRemote() {
+	bool initRemote() {
 		printf("init remote\n");
 		if (useNetwork) {
-			con->initRemote();
+			return con->initRemote();
 		}
+		return false;
 	}
 
 	void setOffset(ssmTimeT offset) {
@@ -586,7 +587,9 @@ void nproc_start(MyParam& param) {
 	log = param.logArray.begin();
 	while (log != param.logArray.end()) {
 		log->setUseNetwork(true);
-		log->initRemote();
+		if (!log->initRemote()) {
+			return; // init fail
+		}
 		// logの中のPConnectorからMC_INITIALIZEを発行する
 		log++;
 	}

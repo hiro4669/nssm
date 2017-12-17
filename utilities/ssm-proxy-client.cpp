@@ -112,7 +112,8 @@ bool PConnector::connectToServer(const char* serverName, int port) {
 	return true;
 }
 
-void PConnector::initRemote() {
+bool PConnector::initRemote() {
+	bool r = true;
 	ssm_msg msg;
 	char *msg_buf = (char*)malloc(sizeof(ssm_msg));
 	connectToServer("127.0.0.1", 8080);
@@ -121,10 +122,15 @@ void PConnector::initRemote() {
 	}
 	if (recvMsgFromServer(&msg, msg_buf)) {
 		printf("msg = %d\n", (int)msg.cmd_type);
+		if (msg.cmd_type != MC_RES) {
+			r = false;
+		}
 	} else {
 		fprintf(stderr, "fail recvMsg\n");
+		r = false;
 	}
 	free(msg_buf);
+	return r;
 
 }
 
@@ -222,7 +228,7 @@ void PConnector::setStream(const char *streamName, int streamId = 0) {
 	this->streamId = streamId;
 }
 
-void PConnector::createRemoteSSM( const char *name, int stream_id, size_t ssm_size, ssmTimeT life, ssmTimeT cycle ) {
+bool PConnector::createRemoteSSM( const char *name, int stream_id, size_t ssm_size, ssmTimeT life, ssmTimeT cycle ) {
 	ssm_msg msg;
 	int open_mode = SSM_READ | SSM_WRITE;
 	size_t len;
@@ -230,32 +236,32 @@ void PConnector::createRemoteSSM( const char *name, int stream_id, size_t ssm_si
 	/* initialize check */
 	if( !name ) {
 		fprintf( stderr, "SSM ERROR : create : stream name is NOT defined, err.\n" );
-		exit(1);
+		return false;
 	}
 	len = strlen( name );
 	if( len == 0 || len >= SSM_SNAME_MAX ) {
 		fprintf( stderr, "SSM ERROR : create : stream name length of '%s' err.\n", name );
-		exit(1);
+		return false;
 	}
 
 	if( stream_id < 0 ) {
 		fprintf( stderr, "SSM ERROR : create : stream id err.\n" );
-		exit(1);
+		return false;
 	}
 
 	if( life <= 0.0 ) {
 		fprintf( stderr, "SSM ERROR : create : stream life time err.\n" );
-		exit(1);
+		return false;
 	}
 
 	if( cycle <= 0.0 ) {
 		fprintf( stderr, "SSM ERROR : create : stream cycle err.\n" );
-		exit(1);
+		return false;
 	}
 
 	if( life < cycle ) {
 		fprintf( stderr, "SSM ERROR : create : stream saveTime MUST be larger than stream cycle.\n" );
-		exit(1);
+		return false;
 	}
 
 	strncpy( msg.name, name, SSM_SNAME_MAX );
@@ -269,17 +275,24 @@ void PConnector::createRemoteSSM( const char *name, int stream_id, size_t ssm_si
 	printf("msg.hsize  = %d\n", msg.hsize);
 	printf("msg.time  = %f\n", msg.time);
 
+	bool r = true;
 	char *msg_buf = (char*)malloc(sizeof(ssm_msg));
 	if (!sendMsgToServer(MC_CREATE | open_mode, &msg)) {
 		fprintf(stderr, "error in createRemoteSSM\n");
+		r = false;
 	}
 	if (recvMsgFromServer(&msg, msg_buf)) {
 		printf("msg %d\n", (int)msg.cmd_type);
+		if (msg.cmd_type != MC_RES) {
+			fprintf(stderr, "MC_CREATE Remote RES is not MC_RES\n");
+			r = false;
+		}
 	} else {
 		fprintf(stderr, "fail recvMsg\n");
+		r = false;
 	}
 	free(msg_buf);
-
+	return r;
 }
 
 bool PConnector::create(double saveTime, double cycle) {
@@ -287,25 +300,19 @@ bool PConnector::create(double saveTime, double cycle) {
 		std::cerr << "SSM::create() : data buffer of ''" << streamName << "', id = " << streamId << " is not allocked." << std::endl;
 		return false;
 	}
-
-	this->createRemoteSSM(streamName, streamId, mDataSize, saveTime, cycle);
-	return true;
+	return this->createRemoteSSM(streamName, streamId, mDataSize, saveTime, cycle);
 }
 
 bool PConnector::create(const char *streamName, int streamId, double saveTime, double cycle) {
 	setStream(streamName, streamId);
-	create(saveTime, cycle);
-	return true;
+	return create(saveTime, cycle);
 }
 
 bool PConnector::setProperty() {
 	if (mPropertySize > 0) {
-		setPropertyRemoteSSM(streamName, streamId, mProperty, mPropertySize);
-		return true;
-	} else {
-		return false;
+		return setPropertyRemoteSSM(streamName, streamId, mProperty, mPropertySize);
 	}
-
+	return false;
 }
 
 bool PConnector::setPropertyRemoteSSM(const char *name, int sensor_uid, const void *adata, size_t size) {
@@ -324,12 +331,17 @@ bool PConnector::setPropertyRemoteSSM(const char *name, int sensor_uid, const vo
 	msg.hsize = 0;
 	msg.time = 0;
 
+	bool r = true;
 	char *msg_buf = (char*)malloc(sizeof(ssm_msg));
 	if (!sendMsgToServer(MC_STREAM_PROPERTY_SET, &msg)) {
 		fprintf(stderr, "error in setPropertyRemoteSSM\n");
+		r = false;
 	}
 	if (recvMsgFromServer(&msg, msg_buf)) {
 		printf("msg %d\n", (int)msg.cmd_type);
+		if (msg.cmd_type != MC_RES) {
+			r = false;
+		}
 
 		/*
 		for (int i = 0; i < 16; ++i) {
@@ -337,17 +349,22 @@ bool PConnector::setPropertyRemoteSSM(const char *name, int sensor_uid, const vo
 		}
 		printf("\n");
 		*/
-		sendData(data, size);
+		if (!sendData(data, size)) {
+			r = false;
+		}
 		if (recvMsgFromServer(&msg, msg_buf)) {
 			printf("sendData ack msg %d\n", (int)msg.cmd_type);
+			if (msg.cmd_type != MC_RES) {
+				r = false;
+			}
 		}
 
 	} else {
 		fprintf(stderr, "fail recvMsg\n");
+		r = false;
 	}
 	free(msg_buf);
-
-	return true;
+	return r;
 }
 
 void PConnector::setOffset(ssmTimeT offset) {

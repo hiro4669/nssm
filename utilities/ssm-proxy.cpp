@@ -283,11 +283,11 @@ void ProxyServer::handleCommand() {
 			mData = (char*)malloc(mFullDataSize);
 			if (mData == NULL) {
 				fprintf(stderr, "fail to create mData\n");
+				sendMsg(MC_RES, &msg);
 			} else {
 				printf("mData is created\n");
+				sendMsg(MC_FAIL, &msg);
 			}
-
-			sendMsg(MC_RES, &msg);
 			break;
 		}
 		case MC_STREAM_PROPERTY_SET: {
@@ -304,10 +304,10 @@ void ProxyServer::handleCommand() {
 			if (len > 0) {
 				printf("receive property\n");
 				sendMsg(MC_RES, &msg);
+			} else {
+				sendMsg(MC_FAIL, &msg);
 			}
-
 			free(buf);
-
 			break;
 		}
 		case MC_OFFSET: {

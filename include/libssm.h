@@ -63,6 +63,7 @@ enum
 	
 	MC_OFFSET,                               // オフセットの設定
 
+	MC_FAIL = 30,
 	MC_RES = 31									///< コマンドに対する返信
 };
 
