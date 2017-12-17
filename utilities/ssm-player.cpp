@@ -170,7 +170,8 @@ public:
 		log.readProperty(  );
 		/* For Network*/
 		if (useNetwork) {
-			log.readFull();
+			//log.readFull();
+			//exit(1);
 		} else { // これはバグじゃないか？
 			log.readNext(  );
 		}
@@ -240,6 +241,9 @@ public:
 			// log時間でのstreamへの書き込み
 			if (useNetwork) {
 				//printf("write---\n");
+				con->write(log.time());
+//				exit(1);
+
 			} else {
 				stream.write( log.time(  ) );
 			}
@@ -590,13 +594,13 @@ void nproc_start(MyParam& param) {
 	setSigInt();
 
 	// ログファイルの展開とストリームの作成
+	// MC_CREATEとMC_PROPERTY_SETを実行
 	param.logOpen();
 	param.printProgressInit();
 
 	log = param.logArray.begin(  );
-	log->setOffset(gettimeOffset()); // リモートにオフセットを設定
+	log->setOffset(gettimeOffset()); // リモートにオフセットを設定．MC_OFFSETを実行
 
-	// timecontrolのオフセットをプロ棋士に送る必要があるかも
 
 	logInfo << "  start" << endl << endl;
 	logInfo << "\033[1A" << "> " << flush;
