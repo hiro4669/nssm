@@ -284,10 +284,10 @@ void ProxyServer::handleCommand() {
 			mData = (char*)malloc(mFullDataSize);
 			if (mData == NULL) {
 				fprintf(stderr, "fail to create mData\n");
-				sendMsg(MC_RES, &msg);
+				sendMsg(MC_FAIL, &msg);
 			} else {
 				printf("mData is created\n");
-				sendMsg(MC_FAIL, &msg);
+				sendMsg(MC_RES, &msg);
 			}
 			break;
 		}

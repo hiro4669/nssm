@@ -260,8 +260,8 @@ public:
 		}
 		printf("\n");
 
-
-		/*// これが最も効率的だと思うやつ
+		// これが最も効率的だと思うやつ
+		/*
 		double mlTime;
 		mLogFile->read((char*)mFullData, sizeof(ssmTimeT) + mDataSize);
 		mlTime = *(reinterpret_cast<double*>(mFullData));
@@ -272,7 +272,7 @@ public:
 			printf("%02x ", p[i] & 0xff);
 		}
 		printf("\n");
-		 */
+		*/
 
 		/*//いままでのやつ．参考にならず
 		mLogFile->read( (char *)&mTime, sizeof( ssmTimeT ) );
