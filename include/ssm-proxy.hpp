@@ -3,11 +3,14 @@
 #ifndef _SSM_PROXY_H_
 #define _SSM_PROXY_H_
 
+#include "ssm.hpp"
+
 void test();
 
 #define SERVER_PORT     8080            /* サーバ用PORT */
 #define SERVER_IP       0x00000000UL    /* サーバ用待ち受けIP */
 #define BUFFER_SIZE     1024            /* バッファバイト数 */
+
 
 /* クライアントからの接続を待つサーバの情報を表現する構造体 */
 typedef struct {
@@ -29,10 +32,14 @@ private:
 	TCPSERVER_INFO server;
 	TCPCLIENT_INFO client;
 
-	char* mData;
-	size_t mDataSize;
-	size_t ssmTimeSize;
-	size_t mFullDataSize;
+	char* mData;        // データ用
+	size_t mDataSize;   // データサイズ
+	size_t ssmTimeSize; // ssmTimeTのサイズ
+	size_t mFullDataSize;  // mDataSize + ssmTimeSize
+	char *mProperty;
+	size_t mPropertySize;
+
+	SSMApiBase stream; // real stream
 
 	bool open();
 	bool wait();

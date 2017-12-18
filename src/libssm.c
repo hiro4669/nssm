@@ -602,7 +602,23 @@ SSM_tid writeSSMP( SSM_sid sid, const void *adata, ssmTimeT ytime ,
 
 		//i = setTID_time( shm_p, ytime, tid );
 		//memcpy( shm_get_data_ptr( shm_p, tid ), data, shm_p->size );
+		/*
+		printf("write addr = %p\n", shm_get_data_ptr( shm_p, tid ));
+		char *p = (char*)data;
+		for (int j = 0; j < 8; j++) {
+			printf("%02x ", p[j] & 0xff);
+		}
+		printf("\n");
+
+		p = shm_get_data_ptr( shm_p, tid );
+		*/
 		callback( shm_get_data_ptr( shm_p, tid ), data, user_data );
+		/*
+		for (int j = 0; j < 8; j++) {
+			printf("%02x ", p[j] & 0xff);
+		}
+		printf("\n");
+		*/
 	
 		/* 時刻の登録処理（y_timeが0の場合は現在の時刻） */
 		shm_set_time( shm_p, tid, ytime );

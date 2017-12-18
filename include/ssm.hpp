@@ -12,6 +12,8 @@
 #include <iostream>
 #include "ssm.h"
 
+#include "libssm.h"
+
 /**
  * Dummy Class
  */
@@ -501,6 +503,28 @@ public:
 		mDataSize = dataSize;
 		mProperty = property;
 		mPropertySize = propertySize;
+	}
+
+	/**
+	 * 共有メモリの中身を見る．基本的にはデバッグ用
+	 *
+	 */
+	void showRawData() {
+		ssm_header *shm_p = NULL;
+		//SSM_tid tid = writeSSM( ssmId, mData, time );
+		shm_p = shm_get_address(ssmId);
+		printf("--- show row data ---\n");
+		printf("size = 0x%x\n", shm_p->size);
+		printf("num = %d\n", shm_p->num);
+		char *p = NULL;
+		for (int i = 0; i < shm_p->num; ++i) {
+			p = (char*)shm_get_data_ptr(shm_p, i);
+			printf("%d = %p\n", i, p);
+			for (int j = 0; j < 8; j++) {
+				printf("%02x ", p[j] & 0xff);
+			}
+			printf("\n");
+		}
 	}
 
 };

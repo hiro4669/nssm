@@ -10,7 +10,7 @@
 #include <errno.h>
 
 #include "libssm.h"
-#include "ssm.h"
+//#include "ssm.h"
 
 #include "printlog.hpp"
 
@@ -24,6 +24,8 @@ ProxyServer::ProxyServer() {
 	mDataSize = 0;
 	ssmTimeSize = sizeof(ssmTimeT);
 	mFullDataSize = 0;
+	mProperty = NULL;
+	mPropertySize = 0;
 }
 
 ProxyServer::~ProxyServer() {
@@ -293,9 +295,13 @@ void ProxyServer::handleCommand() {
 		}
 		case MC_STREAM_PROPERTY_SET: {
 			printf("MC_STREAM_PROPERTY_SET\n");
-			char *buf = (char*)malloc(msg.ssize);
+			mPropertySize = msg.ssize;
+			if (mProperty) {
+				free(mProperty);
+			}
+			mProperty = (char*)malloc(mPropertySize);
 			sendMsg(MC_RES, &msg);
-			int len = recv(this->client.data_socket, buf, msg.ssize, 0);
+			int len = recv(this->client.data_socket, mProperty, msg.ssize, 0);
 			/*
 			for (int i = 0; i < 16; ++i) {
 				printf("%02x ", buf[i]);
@@ -308,7 +314,6 @@ void ProxyServer::handleCommand() {
 			} else {
 				sendMsg(MC_FAIL, &msg);
 			}
-			free(buf);
 			break;
 		}
 		case MC_OFFSET: {

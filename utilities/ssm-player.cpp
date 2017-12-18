@@ -173,7 +173,7 @@ public:
 			//log.readFull();
 			//exit(1);
 		} else { // これはバグじゃないか？
-			log.readNext(  );
+			//log.readNext(  );
 		}
 
 		ssmTimeT saveTime;
@@ -247,6 +247,7 @@ public:
 
 			} else {
 				stream.write( log.time(  ) );
+				printf("tid = %d\n", stream.timeId);
 			}
 
 
@@ -298,6 +299,10 @@ public:
 		if (useNetwork) {
 			con->setOffset(offset);
 		}
+	}
+
+	void showRawData() {
+		stream.showRawData();
 	}
 };
 
@@ -605,6 +610,7 @@ void nproc_start(MyParam& param) {
 	log = param.logArray.begin(  );
 	log->setOffset(gettimeOffset()); // リモートにオフセットを設定．MC_OFFSETを実行
 
+	exit(1); // for test
 
 	logInfo << "  start" << endl << endl;
 	logInfo << "\033[1A" << "> " << flush;
@@ -619,7 +625,7 @@ void nproc_start(MyParam& param) {
 	int count = 0;  // test
 	while( !gShutOff ) {
 		++count;
-		if (write_count > 31) {
+		if (write_count >= 31) {
 			printf("end of log play\n");
 			printf("count = %d\n", count);
 			ctrlC(1);
@@ -719,8 +725,17 @@ int main( int aArgc, char **aArgv )
 		bool isWorking;
 		int playCnt; // 再生中のログの個数
 		printTime = gettimeSSM_real(  );
+		int count = 0;
 		while( !gShutOff )
 		{
+			++count;
+			if (write_count >= 31) {
+				printf("end of log play\n");
+				printf("count = %d\n", count);
+				log = param.logArray.begin(  );
+				log->showRawData(); // show shared memory for debug
+				ctrlC(1);
+			}
 			isWorking = false;
 			playCnt = 0;
 			// 現在時刻の取得
@@ -735,7 +750,9 @@ int main( int aArgc, char **aArgv )
 					playCnt++;
 				log++;
 			}
+
 			// 終了判定
+			//printf("time:endTime = %f:%f\n", time, param.endTime);
 			if( !playCnt || time > param.endTime )
 			{
 				// ループするかどうか
