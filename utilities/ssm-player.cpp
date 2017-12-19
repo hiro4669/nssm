@@ -196,6 +196,12 @@ public:
 
 			//exit(1); // for test
 		} else {
+			/*
+			printf("streamName = %s\n", log.getStreamName());
+			printf("streamId   = %d\n", log.getStreamId());
+			printf("saveTime   = %f\n", saveTime);
+			printf("cycle      = %f\n", log.getCycle());
+			*/
 			if( !stream.create( log.getStreamName(), log.getStreamId(), saveTime, log.getCycle() ) )
 				return false;
 
@@ -594,6 +600,7 @@ void nproc_start(MyParam& param) {
 	while (log != param.logArray.end()) {
 		log->setUseNetwork(true);
 		if (!log->initRemote()) {
+			printf("init fail!\n");
 			return; // init fail
 		}
 		// logの中のPConnectorからMC_INITIALIZEを発行する
@@ -607,10 +614,10 @@ void nproc_start(MyParam& param) {
 	param.logOpen();
 	param.printProgressInit();
 
+
+
 	log = param.logArray.begin(  );
 	log->setOffset(gettimeOffset()); // リモートにオフセットを設定．MC_OFFSETを実行
-
-	exit(1); // for test
 
 	logInfo << "  start" << endl << endl;
 	logInfo << "\033[1A" << "> " << flush;

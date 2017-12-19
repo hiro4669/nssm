@@ -10,7 +10,8 @@
 #include <errno.h>
 
 #include "libssm.h"
-//#include "ssm.h"
+#include "ssm-time.h"
+#include "ssm.h"
 
 #include "printlog.hpp"
 
@@ -173,6 +174,7 @@ void ProxyServer::serializeMessage(ssm_msg *msg, char *buf) {
 	msg->hsize = readLong(&buf);
 	//msg->time = readLong(&buf);
 	msg->time = readDouble(&buf);
+	msg->saveTime = readDouble(&buf);
 
 
 
@@ -212,11 +214,14 @@ void ProxyServer::handleData() {
 		p = &mData[8];
 		time = *(reinterpret_cast<ssmTimeT*>(mData));
 		printf("time = %f\n", time);
+		stream.write(time);
 		for (int i = 0; i < 8; ++i) {
 			printf("%02x ", p[i] & 0xff);
 		}
 		printf("\n");
 	}
+	printf("--- raw data ---\n");
+	stream.showRawData();
 }
 
 int ProxyServer::receiveMsg(ssm_msg *msg, char *buf) {
@@ -245,7 +250,8 @@ int ProxyServer::sendMsg(int cmd_type, ssm_msg *msg) {
 	writeInt(&p, msg->suid);
 	writeLong(&p, msg->ssize);
 	writeLong(&p, msg->hsize);
-	writeLong(&p, msg->time);
+	writeDouble(&p, msg->time);
+	writeDouble(&p, msg->saveTime);
 
 	if ((len = send(this->client.data_socket, buf, sizeof(ssm_msg), 0)) == -1) {
 		fprintf(stderr, "error happens\n");
@@ -270,25 +276,42 @@ void ProxyServer::handleCommand() {
 		}
 		case MC_INITIALIZE: {
 			printf("MC_INITIALIZE\n");
-			/*
+
 			if (!initSSM()) {
 				fprintf(stderr, "init ssm error in ssm-proxy\n");
+				sendMsg(MC_FAIL, &msg);
+				break;
+			} else {
+				sendMsg(MC_RES, &msg);
 			}
-			*/
-			sendMsg(MC_RES, &msg);
 			break;
 		}
 		case MC_CREATE: {
 			printf("MC_CREATE\n");
+			/*
+			printf("strean name = %s\n", msg.name);
+			printf("stream_id = %d\n", msg.suid);
 			printf("ssm_size = %d\n", msg.ssize);
+			printf("hsize =  %d\n", msg.hsize);
+			printf("msg.time(cycle) = %f\n", msg.time);
+			printf("msg.saveTime = %f\n", msg.saveTime);
+			*/
 			mDataSize = msg.ssize;
 			mFullDataSize = mDataSize + sizeof(ssmTimeT);
+			if (mData) {
+				free(mData);
+			}
 			mData = (char*)malloc(mFullDataSize);
 			if (mData == NULL) {
 				fprintf(stderr, "fail to create mData\n");
 				sendMsg(MC_FAIL, &msg);
 			} else {
-				printf("mData is created\n");
+				stream.setDataBuffer(&mData[sizeof(ssmTimeT)], mDataSize);
+				if (!stream.create(msg.name, msg.suid, msg.saveTime, msg.time)) {
+					sendMsg(MC_FAIL, &msg);
+					break;
+				}
+				printf("srream is created\n");
 				sendMsg(MC_RES, &msg);
 			}
 			break;
@@ -300,16 +323,30 @@ void ProxyServer::handleCommand() {
 				free(mProperty);
 			}
 			mProperty = (char*)malloc(mPropertySize);
+			if (mProperty == NULL) {
+				sendMsg(MC_FAIL, &msg);
+				break;
+			}
+			stream.setPropertyBuffer(mProperty, mPropertySize);
+
 			sendMsg(MC_RES, &msg);
 			int len = recv(this->client.data_socket, mProperty, msg.ssize, 0);
 			/*
-			for (int i = 0; i < 16; ++i) {
-				printf("%02x ", buf[i]);
+			for (int i = 0; i < 8; ++i) {
+				printf("%02x ", mProperty[i]);
 			}
 			printf("\n");
+			ssmTimeT t = gettimeOffset();
+			printf("time = %f\n", t);
 			*/
+
+
 			if (len > 0) {
 				printf("receive property\n");
+				if (mPropertySize && !stream.setProperty()) {
+					sendMsg(MC_FAIL, &msg);
+					break;
+				}
 				sendMsg(MC_RES, &msg);
 			} else {
 				sendMsg(MC_FAIL, &msg);
@@ -318,6 +355,12 @@ void ProxyServer::handleCommand() {
 		}
 		case MC_OFFSET: {
 			printf("MC_OFFSET\n");
+
+			ssmTimeT offset = msg.time;
+			printf("time  = %f\n", offset);
+			settimeOffset(offset);
+			printf("time2 = %f\n", gettimeOffset());
+
 			sendMsg(MC_RES, &msg);
 
 			handleData();

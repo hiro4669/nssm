@@ -12,6 +12,7 @@
 #include <sys/shm.h>
 
 #include "ssm.h"
+#include "ssm-time.h"
 
 #ifndef __GNUC__
 #  define  __attribute__(x)  /*NOTHING*/
@@ -104,6 +105,7 @@ extern "C"
 		size_t ssize;							///< データサイズ
 		size_t hsize;							///< 履歴数
 		ssmTimeT time;							///< ストリーム周期
+		ssmTimeT saveTime;                       ///< saveTime
 	} ssm_msg;
 	
 	/** SSMのエッジ取得メッセージ */

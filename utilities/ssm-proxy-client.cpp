@@ -143,7 +143,8 @@ void PConnector::serializeMessage(ssm_msg *msg, char *buf) {
 	msg->suid = readInt(&buf);
 	msg->ssize = readLong(&buf);
 	msg->hsize = readLong(&buf);
-	msg->time = readLong(&buf);
+	msg->time = readDouble(&buf);
+	msg->saveTime = readDouble(&buf);
 }
 
 bool PConnector::recvMsgFromServer(ssm_msg *msg, char *buf) {
@@ -195,6 +196,7 @@ bool PConnector::sendMsgToServer(int cmd_type, ssm_msg *msg) {
 	writeLong(&p, msg->ssize);
 	writeLong(&p, msg->hsize);
 	writeDouble(&p, msg->time);
+	writeDouble(&p, msg->saveTime);
 
 	if (send(sock, buf, sizeof(ssm_msg), 0) == -1) {
 		fprintf(stderr, "error happens\n");
@@ -269,6 +271,7 @@ bool PConnector::createRemoteSSM( const char *name, int stream_id, size_t ssm_si
 	msg.ssize = ssm_size;
 	msg.hsize = calcSSM_table( life, cycle ) ;	/* table size */
 	msg.time = cycle;
+	msg.saveTime = life;
 
 	printf("msg.suid  = %d\n", msg.suid);
 	printf("msg.ssize = %d\n", msg.ssize);
@@ -340,7 +343,8 @@ bool PConnector::setPropertyRemoteSSM(const char *name, int sensor_uid, const vo
 	if (recvMsgFromServer(&msg, msg_buf)) {
 		printf("msg %d\n", (int)msg.cmd_type);
 		if (msg.cmd_type != MC_RES) {
-			r = false;
+			//r = false;
+			return false;
 		}
 
 		/*

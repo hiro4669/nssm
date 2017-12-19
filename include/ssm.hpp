@@ -506,6 +506,24 @@ public:
 	}
 
 	/**
+	 * データだけのバッファをセットする
+	 */
+	void setDataBuffer(void *data, size_t dataSize) {
+		mData = data;
+		mDataSize = dataSize;
+	}
+
+	/**
+	 * プロパティのバッファをセットする
+	 */
+	void setPropertyBuffer(void *property, size_t propertySize) {
+		mProperty = property;
+		mPropertySize = propertySize;
+	}
+
+
+
+	/**
 	 * 共有メモリの中身を見る．基本的にはデバッグ用
 	 *
 	 */
@@ -525,6 +543,20 @@ public:
 			}
 			printf("\n");
 		}
+		printf("\n----- ssm time ------\n");
+		ssmTimeT *tp = shm_get_time_address(shm_p);
+		for (int i = 0; i < shm_p->num; ++i) {
+			p = (char*)&tp[i];
+			printf("%d = %p\n", i, p);
+			for (int j = 0; j < 8; ++j) {
+				printf("%02x ", p[j] & 0xff);
+			}
+			printf("\n");
+		}
+
+
+
+
 	}
 
 };
