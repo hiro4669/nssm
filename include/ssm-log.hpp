@@ -247,6 +247,9 @@ public:
 		printf("readFull\n");
 
 		// これが今までのやり方を真似たやつ
+
+
+
 		double mlTime;
 		mLogFile->read( (char *)&mTime, sizeof( ssmTimeT ) ); // この処理が重い．．なぜか．．
 		mLogFile->read( &((char *)mFullData)[8], mDataSize );
@@ -261,6 +264,7 @@ public:
 		printf("\n");
 
 		// これが最も効率的だと思うやつ
+
 		/*
 		double mlTime;
 		mLogFile->read((char*)mFullData, sizeof(ssmTimeT) + mDataSize);

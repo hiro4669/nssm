@@ -177,7 +177,7 @@ void ProxyServer::serializeMessage(ssm_msg *msg, char *buf) {
 	msg->saveTime = readDouble(&buf);
 
 
-
+	/*
 	printf("msg_type = %d\n", msg->msg_type);
 	printf("res_type = %d\n", msg->res_type);
 	printf("cmd_type = %d\n", msg->cmd_type);
@@ -191,7 +191,7 @@ void ProxyServer::serializeMessage(ssm_msg *msg, char *buf) {
 	printf("ssize = %d\n", msg->ssize);
 	printf("hsize = %d\n", msg->hsize);
 	printf("time = %f\n", msg->time);
-
+	*/
 }
 
 bool ProxyServer::receiveData() {
