@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <arpa/inet.h>
 
 #include <sys/socket.h>
@@ -155,6 +156,7 @@ ProxyServer::~ProxyServer() {
 
 bool ProxyServer::init() {
 	printf("init\n");
+	setupSigHandler();
 	memset(&this->server, 0, sizeof(this->server));
 	this->server.wait_socket = -1;
 	this->server.server_addr.sin_family      = AF_INET;
@@ -546,6 +548,26 @@ bool ProxyServer::run() {
 	return true;
 }
 
+void ProxyServer::setupSigHandler() {
+	struct sigaction act;
+	memset(&act, 0, sizeof(act));   /* sigaction構造体をとりあえずクリア */
+	act.sa_handler = &ProxyServer::catchSignal; /* SIGCHLD発生時にcatch_SIGCHLD()を実行 */
+	sigemptyset(&act.sa_mask);  /* catch_SIGCHLD()中の追加シグナルマスクなし */
+	act.sa_flags = SA_NOCLDSTOP | SA_RESTART;
+	sigaction(SIGCHLD, &act, NULL);
+}
+
+void ProxyServer::catchSignal(int signo) {
+	//printf("catch signal!!!!");
+	pid_t child_pid = 0;
+    /* すべての終了している子プロセスに対してwaitpid()を呼ぶ */
+    do {
+        int child_ret;
+        child_pid = waitpid(-1, &child_ret, WNOHANG);
+        /* すべての終了している子プロセスへwaitpid()を呼ぶと
+           WNOHANGオプションによりwaitpid()は0を返す */
+    } while(child_pid>0);
+}
 
 
 

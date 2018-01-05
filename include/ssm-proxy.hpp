@@ -92,6 +92,9 @@ private:
 	bool receiveData();
 	void handleData();
 
+	void setupSigHandler();
+	static void catchSignal(int signo);
+
 public:
 	ProxyServer();
 	~ProxyServer();
