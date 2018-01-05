@@ -10,6 +10,7 @@
 PConnector::PConnector() {
 	printf("PConnector constructor\n");
 	sock = -1;
+	dsock = -1;
 	mDataSize = 0;
 	streamId = 0;
 	mData = NULL;
@@ -19,7 +20,6 @@ PConnector::PConnector() {
 	streamName = "";
 	mFullData = NULL;
 	mFullDataSize = 0;
-
 }
 
 PConnector::~PConnector() {
@@ -97,7 +97,6 @@ void PConnector::writeRawData(char **p, char *d, int len) {
 bool PConnector::connectToServer(const char* serverName, int port) {
 	printf("connect to server\n");
 
-
 	sock = socket(AF_INET, SOCK_STREAM, 0);
 
 	server.sin_family = AF_INET;
@@ -111,6 +110,24 @@ bool PConnector::connectToServer(const char* serverName, int port) {
 	printf("connect to server2	\n");
 	return true;
 }
+
+
+bool PConnector::connectToDataServer(const char* serverName, int port) {
+
+	dsock = socket(AF_INET, SOCK_STREAM, 0);
+	dserver.sin_family = AF_INET;
+	dserver.sin_port = htons(port);
+	dserver.sin_addr.s_addr = inet_addr(serverName);
+	if(connect(dsock, (struct sockaddr *)&dserver, sizeof(dserver))) {
+		fprintf(stderr, "connection error\n");
+		return false;
+	}
+	printf("dsock = %d\n", sock);
+	printf("connect to dataserver	\n");
+	return true;
+}
+
+
 
 bool PConnector::initRemote() {
 	bool r = true;
@@ -168,7 +185,8 @@ bool PConnector::write( ssmTimeT time = gettimeSSM(  ) ) {
 	printf("\n");
 	*/
 
-	if (send(sock, mFullData, mFullDataSize, 0) == -1) {
+	//if (send(sock, mFullData, mFullDataSize, 0) == -1) {
+	if (send(dsock, mFullData, mFullDataSize, 0) == -1) { // データ送信用経路を使う
 		fprintf(stderr, "error happen!!!!");
 		return false;
 	}
@@ -388,3 +406,41 @@ void PConnector::setOffset(ssmTimeT offset) {
 	}
 	free(msg_buf);
 }
+
+bool PConnector::createDataCon() {
+	ssm_msg msg;
+	msg.hsize = 0;
+	msg.ssize = 0;
+	msg.suid = 0;
+	msg.time = 0;
+	char *msg_buf = (char*)malloc(sizeof(ssm_msg));
+	if (!sendMsgToServer(MC_CONNECTION, &msg)) {
+		fprintf(stderr, "error in createDataCon\n");
+	}
+	if (recvMsgFromServer(&msg, msg_buf)) {
+		printf("msg res offset %d\n", (int)msg.cmd_type);
+		printf("msg res suid(port) %d\n", (int)msg.suid);
+	}
+	free(msg_buf);
+
+	printf("connectToDataServer!\n");
+	connectToDataServer("127.0.0.1", msg.suid);
+
+	return true;
+}
+
+bool PConnector::terminate() {
+	ssm_msg msg;
+	msg.hsize = 0;
+	char *msg_buf = (char*)malloc(sizeof(ssm_msg));
+	if (!sendMsgToServer(MC_TERMINATE, &msg)) {
+		fprintf(stderr, "error in setOffset\n");
+	}
+	if (recvMsgFromServer(&msg, msg_buf)) {
+		printf("msg terminate %d\n", (int)msg.cmd_type);
+	}
+	free(msg_buf);
+
+	return true;
+}
+

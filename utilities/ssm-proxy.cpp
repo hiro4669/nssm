@@ -19,20 +19,138 @@
 
 extern pid_t my_pid; // for debug
 
+DataCommunicator::DataCommunicator(uint16_t nport, char* mData, size_t d_size, size_t t_size, SSMApiBase *pstream) {
+	printf("DataCommunicatir new\n");
+	this->mData = mData;
+	this->mDataSize = d_size;
+	this->ssmTimeSize = t_size;
+	this->mFullDataSize = d_size + t_size;
+	this->pstream = pstream;
+
+	this->server.wait_socket = -1;
+	this->server.server_addr.sin_family      = AF_INET;
+	this->server.server_addr.sin_addr.s_addr = htonl(SERVER_IP);
+	this->server.server_addr.sin_port        = htons(nport);
+
+	if(!this->sopen()) {
+		perror("errororor\n");
+	}
+}
+
+DataCommunicator::~DataCommunicator() {
+	this->sclose();
+}
+
+bool DataCommunicator::receiveData() {
+	int len = recv(this->client.data_socket, mData, mFullDataSize, 0);
+	if (len != mFullDataSize) {
+		return false;
+	}
+	return true;
+}
+void DataCommunicator::handleData() {
+	char *p;
+	ssmTimeT time;
+	while(true) {
+		if (!receiveData()) {
+			fprintf(stderr, "receiveData Error happends\n");
+			break;
+		}
+		p = &mData[8];
+		time = *(reinterpret_cast<ssmTimeT*>(mData));
+		printf("time = %f\n", time);
+		pstream->write(time);
+		for (int i = 0; i < 8; ++i) {
+			printf("%02x ", p[i] & 0xff);
+		}
+		printf("\n");
+	}
+	pstream->showRawData();
+}
+void* DataCommunicator::run(void* args) {
+	printf("runrunrun\n");
+
+	if(rwait()) {
+		handleData();
+		printf("end of thread\n");
+	}
+	return nullptr;
+}
+
+bool DataCommunicator::sopen() {
+	this->server.wait_socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (this->server.wait_socket == -1) {
+		perror("open socket error");
+		return false;
+	}
+	if (bind(this->server.wait_socket, (struct sockaddr*)&this->server.server_addr,
+			sizeof(this->server.server_addr)) == -1) {
+		perror("data com bind");
+		return false;
+	}
+	if (listen(this->server.wait_socket, 5) == -1) {
+		perror("data com open");
+		return false;
+	}
+	printf("Data Communicagtor open!!\n");
+	return true;
+}
+
+bool DataCommunicator::sclose() {
+	if (this->client.data_socket != -1) {
+		close(this->client.data_socket);
+		this->client.data_socket = -1;
+	}
+	if (this->server.wait_socket != -1) {
+		close(this->server.wait_socket);
+		this->server.wait_socket = -1;
+	}
+
+	return true;
+}
+
+bool DataCommunicator::rwait() {
+	memset(&this->client, 0, sizeof(this->client));
+	this->client.data_socket = -1;
+	for (;;) {
+		socklen_t client_addr_len = sizeof(this->client.client_addr);
+		printf("wait!!!\n");
+		this->client.data_socket = accept(this->server.wait_socket,
+				(struct sockaddr*)&this->client.client_addr,
+				&client_addr_len);
+		printf("pppppp\n");
+		if (this->client.data_socket != -1) break;
+		if (errno == EINTR) continue;
+		perror("server open accept");
+		return false;
+	}
+	printf("wait2!!!\n");
+	return true;
+}
+
+
+
+
 ProxyServer::ProxyServer() {
 	printf("Proxy Server created\n");
+	nport = SERVER_PORT;
 	mData = NULL;
 	mDataSize = 0;
 	ssmTimeSize = sizeof(ssmTimeT);
 	mFullDataSize = 0;
 	mProperty = NULL;
 	mPropertySize = 0;
+	com = nullptr;
+
 }
 
 ProxyServer::~ProxyServer() {
 	printf("proxy server deleted\n");
+	this->server_close();
 	free(mData);
 	mData = NULL;
+	delete com;
+	com = nullptr;
 }
 
 bool ProxyServer::init() {
@@ -195,7 +313,7 @@ void ProxyServer::serializeMessage(ssm_msg *msg, char *buf) {
 }
 
 bool ProxyServer::receiveData() {
-	char *p;
+	//char *p;
 	int len = recv(this->client.data_socket, mData, mFullDataSize, 0);
 	if (len != mFullDataSize) {
 		return false;
@@ -263,12 +381,13 @@ int ProxyServer::sendMsg(int cmd_type, ssm_msg *msg) {
 
 void ProxyServer::handleCommand() {
 	printf("handlecommand\n");
+	fprintf(stderr, "nport = %d\n", nport);
 	ssm_msg msg;
 	char *buf = (char*)malloc(sizeof(ssm_msg));
 	while(true) {
 		printf("wait recv\n");
 		int len = receiveMsg(&msg, buf);
-		printf("len = %d\n", len);
+		printf("len in process = %d\n", len);
 		if (len == 0) break;
 		switch (msg.cmd_type & 0x1f) {
 		case MC_NULL: {
@@ -363,7 +482,22 @@ void ProxyServer::handleCommand() {
 
 			sendMsg(MC_RES, &msg);
 
-			handleData();
+			//handleData();
+			//com->wait();
+			break;
+		}
+		case MC_CONNECTION: {
+			printf("MC_CONNECTION\n");
+			msg.suid = nport;
+			com = new DataCommunicator(nport, mData, mDataSize, ssmTimeSize, &stream);
+			com->start(nullptr);
+			sendMsg(MC_RES, &msg);
+			break;
+		}
+		case MC_TERMINATE: {
+			printf("MC_TERMINATE\n");
+			sendMsg(MC_RES, &msg);
+			goto END_PROC;
 			break;
 		}
 		default: {
@@ -375,18 +509,17 @@ void ProxyServer::handleCommand() {
 
 	}
 
-
-
+END_PROC:
 	free(buf);
-	/*
-	if ( !initSSM ()) {
-		//logError << "ssm init error." << std::endl;
-		std::cerr << "Error" << std::endl;
-		exit(1);
+	if (com) {
+		com->wait();
 	}
+	free(com);
 
-	printf("mypid = %d\n", my_pid);
-	*/
+	// SSMの終了
+	// 時間の初期化
+	inittimeSSM(  );
+	endSSM(  );
 }
 
 
@@ -395,6 +528,7 @@ void ProxyServer::handleCommand() {
 bool ProxyServer::run() {
 	printf("run\n");
 	while(wait()) {
+		++nport;
 		pid_t child_pid = fork();
 		if (child_pid == -1) { // fork failed
 			break;

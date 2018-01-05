@@ -9,10 +9,13 @@
 
 #include "libssm.h"
 
+
 class PConnector {
 private:
 	struct sockaddr_in server;
+	struct sockaddr_in dserver;
 	int sock;
+	int dsock;                              // データ送信用
 
 	const char *streamName;
 	int streamId;
@@ -22,6 +25,7 @@ private:
 	size_t mPropertySize;					///< プロパティサイズ
 	void *mFullData;
 	size_t mFullDataSize;
+
 
 
 	void writeInt(char **p, int v);
@@ -48,6 +52,9 @@ public:
 	bool sendMsgToServer(int cmd_type, ssm_msg *msg);
 	bool recvMsgFromServer(ssm_msg *msg, char *buf);
 
+	bool connectToDataServer(const char* serverName, int port);
+
+
 	bool initRemote();
 	void setStream(const char *streamName, int streamId);
 	void setBuffer(void *data, size_t dataSize, void *property, size_t propertySize, void *fulldata);
@@ -55,11 +62,10 @@ public:
 	bool create(double saveTime, double cycle);
 	bool setProperty();
 	void setOffset(ssmTimeT offset);
+	bool createDataCon();
+	bool terminate();
 
 	bool write( ssmTimeT time); // write bulkdata with time
-
-
-
-
 };
+
 #endif

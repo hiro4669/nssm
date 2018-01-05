@@ -63,6 +63,7 @@ enum
 	MC_EDGE_LIST_INFO,							///< エッジ情報の取得
 	
 	MC_OFFSET,                               // オフセットの設定
+	MC_CONNECTION,                           // バルク通信用経路の確立
 
 	MC_FAIL = 30,
 	MC_RES = 31									///< コマンドに対する返信

@@ -208,6 +208,15 @@ public:
 			if( propertySize && !stream.setProperty() )
 						return false;
 		}
+
+
+		/* open new socket for bulk communication*/
+		if (useNetwork) {
+			if(!con->createDataCon()) {
+				fprintf(stderr, "error in creteDataCon\n");
+				return false;
+			}
+		}
 		return true;
 	}
 	
@@ -304,6 +313,12 @@ public:
 	void setOffset(ssmTimeT offset) {
 		if (useNetwork) {
 			con->setOffset(offset);
+		}
+	}
+
+	void terminate() {
+		if (useNetwork) {
+			con->terminate();
 		}
 	}
 
@@ -615,13 +630,14 @@ void nproc_start(MyParam& param) {
 	param.printProgressInit();
 
 
-
 	log = param.logArray.begin(  );
 	log->setOffset(gettimeOffset()); // リモートにオフセットを設定．MC_OFFSETを実行
+
 
 	logInfo << "  start" << endl << endl;
 	logInfo << "\033[1A" << "> " << flush;
 
+	//exit(1);// temporary
 	// メインループ
 
 
@@ -633,9 +649,10 @@ void nproc_start(MyParam& param) {
 	while( !gShutOff ) {
 		++count;
 		if (write_count >= 31) {
-			printf("end of log play\n");
-			printf("count = %d\n", count);
-			ctrlC(1);
+			//printf("end of log play\n");
+			//printf("count = %d\n", count);
+			//ctrlC(1);
+			break;
 		}
 
 		isWorking = false;
@@ -683,6 +700,10 @@ void nproc_start(MyParam& param) {
 			usleepSSM( 1000 ); // 1msスリープ
 	}
 
+	printf("end of log play\n");
+	printf("count = %d\n", count);
+	log = param.logArray.begin(  );
+	log->terminate();
 
 
 }

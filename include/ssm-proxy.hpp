@@ -25,12 +25,39 @@ typedef struct {
 } TCPCLIENT_INFO;
 
 
+#include "Thread.hpp"
+
+class DataCommunicator : public Thread {
+private:
+	TCPSERVER_INFO server;
+	TCPCLIENT_INFO client;
+
+	char* mData;
+	size_t mDataSize;
+	size_t ssmTimeSize;
+	size_t mFullDataSize;
+
+	SSMApiBase *pstream;
+
+	bool sopen();
+	bool rwait();
+	bool sclose();
+public:
+	DataCommunicator() = delete;
+	DataCommunicator(uint16_t nport, char* mData, size_t d_size, size_t t_size, SSMApiBase *pstream);
+	~DataCommunicator();
+	void* run(void *args);
+
+	void handleData();
+	bool receiveData();
+};
 
 
 class ProxyServer {
 private:
 	TCPSERVER_INFO server;
 	TCPCLIENT_INFO client;
+	uint16_t nport;     // センサデータ受信用のポート番号.子プロセスが生成されるたびにインクリメントしていく
 
 	char* mData;        // データ用
 	size_t mDataSize;   // データサイズ
@@ -38,6 +65,8 @@ private:
 	size_t mFullDataSize;  // mDataSize + ssmTimeSize
 	char *mProperty;
 	size_t mPropertySize;
+
+	DataCommunicator *com;
 
 	SSMApiBase stream; // real stream
 
