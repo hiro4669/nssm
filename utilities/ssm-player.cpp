@@ -648,9 +648,10 @@ void nproc_start(MyParam& param) {
 	int count = 0;  // test
 	while( !gShutOff ) {
 		++count;
-		if (write_count >= 31) {
+		if (write_count >= 62) {
+			printf("write count = %d\n", write_count);
 			//printf("end of log play\n");
-			//printf("count = %d\n", count);
+			printf("count = %d\n", count);
 			//ctrlC(1);
 			break;
 		}
@@ -758,6 +759,7 @@ int main( int aArgc, char **aArgv )
 		{
 			++count;
 			if (write_count >= 31) {
+				printf("write count = %d\n", write_count);
 				printf("end of log play\n");
 				printf("count = %d\n", count);
 				log = param.logArray.begin(  );
